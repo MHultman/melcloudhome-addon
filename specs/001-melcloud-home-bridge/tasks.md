@@ -106,9 +106,9 @@
 - [ ] T038 Test: Add-on starts successfully with valid configuration (verify exit code 0)
 - [ ] T039 Test: Add-on logs startup message with version information
 - [ ] T040 Test: Add-on handles SIGTERM gracefully and exits cleanly
-- [ ] T041 Test: Invalid MELCloud credentials produce clear error message in logs
-- [ ] T042 Test: Invalid MQTT settings produce clear error message in logs
-- [ ] T043 Test: Add-on remains running (does not crash) when auth fails
+- [x] T041 Test: Invalid MELCloud credentials produce clear error message in logs
+- [x] T042 Test: Invalid MQTT settings produce clear error message in logs
+- [x] T043 Test: Add-on remains running (does not crash) when auth fails
 
 **Checkpoint**: US1 complete - Add-on lifecycle working, ready for MELCloud integration
 
