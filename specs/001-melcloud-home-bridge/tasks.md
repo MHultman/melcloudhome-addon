@@ -26,14 +26,14 @@
 
 ### Implementation Tasks
 
-- [ ] T001 Create root directory structure (app/, tests/, .github/)
-- [ ] T002 Create Dockerfile with Python 3.11 base image in Dockerfile
-- [ ] T003 [P] Create requirements.txt with dependencies (playwright>=1.40.0, pymelcloudhome>=1.0.0, paho-mqtt>=1.6.1, aiohttp>=3.9.0, loguru>=0.7.0, pytest, pytest-asyncio, pytest-mock)
-- [ ] T004 [P] Create build.yaml with multi-arch configuration (amd64, aarch64, armv7) in build.yaml
-- [ ] T005 Add Playwright installation to Dockerfile (RUN playwright install --with-deps chromium)
-- [ ] T006 [P] Create config.yaml with add-on metadata and options schema in config.yaml
-- [ ] T007 [P] Create run.sh entrypoint script in run.sh
-- [ ] T008 Create app/**init**.py module initializer
+- [x] T001 Create root directory structure (app/, tests/, .github/)
+- [x] T002 Create Dockerfile with Python 3.11 base image in Dockerfile
+- [x] T003 [P] Create requirements.txt with dependencies (playwright>=1.40.0, pymelcloudhome>=1.0.0, paho-mqtt>=1.6.1, aiohttp>=3.9.0, loguru>=0.7.0, pytest, pytest-asyncio, pytest-mock)
+- [x] T004 [P] Create build.yaml with multi-arch configuration (amd64, aarch64, armv7) in build.yaml
+- [x] T005 Add Playwright installation to Dockerfile (RUN playwright install --with-deps chromium)
+- [x] T006 [P] Create config.yaml with add-on metadata and options schema in config.yaml
+- [x] T007 [P] Create run.sh entrypoint script in run.sh
+- [x] T008 Create app/**init**.py module initializer
 
 ### Acceptance Tests for Milestone 1
 
@@ -59,24 +59,24 @@
 
 ### Implementation Tasks
 
-- [ ] T015 Create app/config.py with Configuration dataclass matching config.yaml schema
-- [ ] T016 Add configuration loading from Supervisor options in app/config.py
-- [ ] T017 Add configuration validation with clear error messages in app/config.py
-- [ ] T018 Add default values (mqtt_host=localhost, mqtt_port=1883, base_topic=homeassistant, poll_interval=60, log_level=INFO) in app/config.py
-- [ ] T019 Create app/logging_conf.py with Loguru setup
-- [ ] T020 Add log level configuration (DEBUG/INFO/WARNING/ERROR) in app/logging_conf.py
-- [ ] T021 Add human-readable log format with structured fields in app/logging_conf.py
-- [ ] T022 Add credential sanitization for log messages in app/logging_conf.py
-- [ ] T023 Create app/utils.py with exponential backoff helper class
+- [x] T015 Create app/config.py with Configuration dataclass matching config.yaml schema
+- [x] T016 Add configuration loading from Supervisor options in app/config.py
+- [x] T017 Add configuration validation with clear error messages in app/config.py
+- [x] T018 Add default values (mqtt_host=localhost, mqtt_port=1883, base_topic=homeassistant, poll_interval=60, log_level=INFO) in app/config.py
+- [x] T019 Create app/logging_conf.py with Loguru setup
+- [x] T020 Add log level configuration (DEBUG/INFO/WARNING/ERROR) in app/logging_conf.py
+- [x] T021 Add human-readable log format with structured fields in app/logging_conf.py
+- [x] T022 Add credential sanitization for log messages in app/logging_conf.py
+- [x] T023 Create app/utils.py with exponential backoff helper class
 
 ### Acceptance Tests for Milestone 2
 
-- [ ] T024 [P] Unit test: Valid configuration loads successfully in tests/unit/test_config.py
-- [ ] T025 [P] Unit test: Invalid configuration raises ValidationError with clear message in tests/unit/test_config.py
-- [ ] T026 [P] Unit test: Missing required fields are detected in tests/unit/test_config.py
-- [ ] T027 [P] Unit test: Default values are applied correctly in tests/unit/test_config.py
+- [x] T024 [P] Unit test: Valid configuration loads successfully in tests/unit/test_config.py
+- [x] T025 [P] Unit test: Invalid configuration raises ValidationError with clear message in tests/unit/test_config.py
+- [x] T026 [P] Unit test: Missing required fields are detected in tests/unit/test_config.py
+- [x] T027 [P] Unit test: Default values are applied correctly in tests/unit/test_config.py
 - [ ] T028 [P] Unit test: Log messages do not contain credentials in tests/unit/test_logging_conf.py
-- [ ] T029 [P] Unit test: Exponential backoff calculates delays correctly in tests/unit/test_utils.py
+- [x] T029 [P] Unit test: Exponential backoff calculates delays correctly in tests/unit/test_utils.py
 - [ ] T030 Test: Integration test - Configuration loads from mock Supervisor environment in tests/integration/test_config_integration.py
 
 **Checkpoint**: Foundation ready - core business logic can now begin
@@ -93,13 +93,13 @@
 
 ### Implementation Tasks
 
-- [ ] T031 Create app/main.py with async main() entry point and signal handlers
-- [ ] T032 Add configuration loading in main() using app/config.py
-- [ ] T033 Add logging initialization in main() using app/logging_conf.py
-- [ ] T034 Add startup logging (version, configuration summary) in app/main.py
-- [ ] T035 Add graceful shutdown handler (SIGTERM, SIGINT) in app/main.py
-- [ ] T036 Add cleanup on shutdown (close connections, flush logs) in app/main.py
-- [ ] T037 Update run.sh to call python -m app.main with proper error handling
+- [x] T031 Create app/main.py with async main() entry point and signal handlers
+- [x] T032 Add configuration loading in main() using app/config.py
+- [x] T033 Add logging initialization in main() using app/logging_conf.py
+- [x] T034 Add startup logging (version, configuration summary) in app/main.py
+- [x] T035 Add graceful shutdown handler (SIGTERM, SIGINT) in app/main.py
+- [x] T036 Add cleanup on shutdown (close connections, flush logs) in app/main.py
+- [x] T037 Update run.sh to call python -m app.main with proper error handling
 
 ### Acceptance Tests for Milestone 3 (US1)
 
@@ -123,14 +123,14 @@
 
 ### Implementation Tasks - Credentials Entity
 
-- [ ] T044 [P] Create app/models/**init**.py module initializer
-- [ ] T045 [P] Create app/models/credentials.py with Credentials dataclass per data-model.md
-- [ ] T046 [P] Add credential validation (email format) in app/models/credentials.py
-- [ ] T047 [P] Create app/models/climate_device.py with ClimateDevice dataclass per data-model.md
-- [ ] T048 [P] Add ClimateDevice.from_pymelcloud_device() classmethod in app/models/climate_device.py
-- [ ] T049 [P] Add ATW settings array parser methods (\_get_atw_setting, \_get_atw_bool, \_get_atw_float) in app/models/climate_device.py
-- [ ] T050 [P] Add device state accessor methods (get_power, get_temperature, get_target_temperature, get_tank_temperature) in app/models/climate_device.py
-- [ ] T051 [P] Add device error checking methods (is_in_error, get_error_code, has_zone_2) in app/models/climate_device.py
+- [x] T044 [P] Create app/models/**init**.py module initializer
+- [x] T045 [P] Create app/models/credentials.py with Credentials dataclass per data-model.md
+- [x] T046 [P] Add credential validation (email format) in app/models/credentials.py
+- [x] T047 [P] Create app/models/climate_device.py with ClimateDevice dataclass per data-model.md
+- [x] T048 [P] Add ClimateDevice.from_pymelcloud_device() classmethod in app/models/climate_device.py
+- [x] T049 [P] Add ATW settings array parser methods (\_get_atw_setting, \_get_atw_bool, \_get_atw_float) in app/models/climate_device.py
+- [x] T050 [P] Add device state accessor methods (get_power, get_temperature, get_target_temperature, get_tank_temperature) in app/models/climate_device.py
+- [x] T051 [P] Add device error checking methods (is_in_error, get_error_code, has_zone_2) in app/models/climate_device.py
 
 ### Implementation Tasks - MELCloud Client
 
