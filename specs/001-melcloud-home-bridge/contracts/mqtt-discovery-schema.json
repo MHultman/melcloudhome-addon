@@ -1,0 +1,162 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MQTT Discovery Message for Climate Entity",
+  "description": "Home Assistant MQTT Discovery configuration payload for MELCloud climate devices",
+  "type": "object",
+  "required": [
+    "name",
+    "unique_id",
+    "device",
+    "modes",
+    "current_temperature_topic",
+    "temperature_command_topic",
+    "mode_state_topic",
+    "mode_command_topic",
+    "availability_topic",
+    "temperature_unit",
+    "min_temp",
+    "max_temp",
+    "temp_step"
+  ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Human-readable entity name",
+      "example": "Living Room AC"
+    },
+    "unique_id": {
+      "type": "string",
+      "description": "Unique identifier for the entity",
+      "pattern": "^melcloud_[0-9]+$",
+      "example": "melcloud_12345"
+    },
+    "device": {
+      "type": "object",
+      "required": [
+        "identifiers",
+        "name",
+        "manufacturer",
+        "model",
+        "sw_version"
+      ],
+      "properties": {
+        "identifiers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of device identifiers",
+          "example": ["melcloud_12345"]
+        },
+        "name": {
+          "type": "string",
+          "description": "Device name",
+          "example": "Living Room AC"
+        },
+        "manufacturer": {
+          "type": "string",
+          "const": "Mitsubishi Electric",
+          "description": "Device manufacturer"
+        },
+        "model": {
+          "type": "string",
+          "description": "Device model number",
+          "example": "MSZ-FH25VE"
+        },
+        "sw_version": {
+          "type": "string",
+          "description": "Firmware version",
+          "example": "1.2.3"
+        }
+      }
+    },
+    "modes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["off", "heat", "cool", "auto", "dry", "fan_only"]
+      },
+      "minItems": 2,
+      "description": "Available HVAC modes",
+      "example": ["off", "heat", "cool", "auto", "dry", "fan_only"]
+    },
+    "current_temperature_topic": {
+      "type": "string",
+      "description": "MQTT topic for current temperature state",
+      "pattern": "^[^+#]+$",
+      "example": "homeassistant/climate/melcloud_12345/state"
+    },
+    "temperature_command_topic": {
+      "type": "string",
+      "description": "MQTT topic for temperature setpoint commands",
+      "pattern": "^[^+#]+$",
+      "example": "homeassistant/climate/melcloud_12345/set_temperature"
+    },
+    "mode_state_topic": {
+      "type": "string",
+      "description": "MQTT topic for mode state",
+      "pattern": "^[^+#]+$",
+      "example": "homeassistant/climate/melcloud_12345/state"
+    },
+    "mode_command_topic": {
+      "type": "string",
+      "description": "MQTT topic for mode commands",
+      "pattern": "^[^+#]+$",
+      "example": "homeassistant/climate/melcloud_12345/set_mode"
+    },
+    "availability_topic": {
+      "type": "string",
+      "description": "MQTT topic for device availability (online/offline)",
+      "pattern": "^[^+#]+$",
+      "example": "homeassistant/climate/melcloud_12345/availability"
+    },
+    "temperature_unit": {
+      "type": "string",
+      "enum": ["C", "F"],
+      "description": "Temperature unit (Celsius or Fahrenheit)",
+      "example": "C"
+    },
+    "min_temp": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50,
+      "description": "Minimum allowed temperature",
+      "example": 16.0
+    },
+    "max_temp": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50,
+      "description": "Maximum allowed temperature",
+      "example": 31.0
+    },
+    "temp_step": {
+      "type": "number",
+      "minimum": 0.1,
+      "maximum": 5,
+      "description": "Temperature adjustment step",
+      "example": 0.5
+    }
+  },
+  "example": {
+    "name": "Living Room AC",
+    "unique_id": "melcloud_12345",
+    "device": {
+      "identifiers": ["melcloud_12345"],
+      "name": "Living Room AC",
+      "manufacturer": "Mitsubishi Electric",
+      "model": "MSZ-FH25VE",
+      "sw_version": "1.2.3"
+    },
+    "modes": ["off", "heat", "cool", "auto", "dry", "fan_only"],
+    "current_temperature_topic": "homeassistant/climate/melcloud_12345/state",
+    "temperature_command_topic": "homeassistant/climate/melcloud_12345/set_temperature",
+    "mode_state_topic": "homeassistant/climate/melcloud_12345/state",
+    "mode_command_topic": "homeassistant/climate/melcloud_12345/set_mode",
+    "availability_topic": "homeassistant/climate/melcloud_12345/availability",
+    "temperature_unit": "C",
+    "min_temp": 16.0,
+    "max_temp": 31.0,
+    "temp_step": 0.5
+  }
+}

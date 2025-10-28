@@ -1,0 +1,41 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MQTT State Message for Climate Entity",
+  "description": "State payload published to MQTT for climate device updates",
+  "type": "object",
+  "required": ["mode", "action", "current_temperature", "target_temperature"],
+  "properties": {
+    "mode": {
+      "type": "string",
+      "enum": ["off", "heat", "cool", "auto", "dry", "fan_only"],
+      "description": "Current HVAC mode",
+      "example": "cool"
+    },
+    "action": {
+      "type": "string",
+      "enum": ["off", "heating", "cooling", "drying", "fan"],
+      "description": "Current action/activity",
+      "example": "cooling"
+    },
+    "current_temperature": {
+      "type": "number",
+      "minimum": -50,
+      "maximum": 100,
+      "description": "Current room temperature",
+      "example": 23.5
+    },
+    "target_temperature": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 50,
+      "description": "Target temperature setpoint",
+      "example": 22.0
+    }
+  },
+  "example": {
+    "mode": "cool",
+    "action": "cooling",
+    "current_temperature": 23.5,
+    "target_temperature": 22.0
+  }
+}
