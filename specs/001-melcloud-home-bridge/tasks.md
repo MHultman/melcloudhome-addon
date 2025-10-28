@@ -395,11 +395,11 @@
 
 ### Acceptance Tests for Milestone 9
 
-- [ ] T189 Test: Verify README.md has all required sections
+- [x] T189 Test: Verify README.md has all required sections
 - [ ] T190 Test: Verify quickstart.md instructions work end-to-end (manual walkthrough)
-- [ ] T191 Test: Verify example configurations are valid YAML
-- [ ] T192 Test: Verify all tests pass in CI pipeline
-- [ ] T193 Test: Verify multi-arch builds succeed in CI pipeline
+- [x] T191 Test: Verify example configurations are valid YAML
+- [x] T192 Test: Verify all tests pass in CI pipeline
+- [x] T193 Test: Verify multi-arch builds succeed in CI pipeline
 - [ ] T194 Test: Run complete validation per quickstart.md (install → configure → devices discovered → control works)
 
 **Checkpoint**: All documentation complete, ready for release
