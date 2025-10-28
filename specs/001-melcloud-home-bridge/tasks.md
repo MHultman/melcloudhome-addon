@@ -134,23 +134,23 @@
 
 ### Implementation Tasks - MELCloud Client
 
-- [ ] T052 Create app/melcloud_client.py with MelCloudClient wrapper class
-- [ ] T053 Add async authenticate() method using pymelcloudhome MelCloudHomeClient.login() in app/melcloud_client.py
-- [ ] T054 Add async list_devices() method using pymelcloudhome list_devices() in app/melcloud_client.py
-- [ ] T055 Add async get_device_state() method using pymelcloudhome get_device_state() in app/melcloud_client.py
-- [ ] T056 Add async set_device_state() method using pymelcloudhome set_device_state() in app/melcloud_client.py
-- [ ] T057 Add exception handling for pymelcloudhome errors (LoginError, ApiError, DeviceNotFound) in app/melcloud_client.py
-- [ ] T058 Add automatic re-authentication on 401 errors in app/melcloud_client.py
-- [ ] T059 Add MelCloudClient instance lifecycle management (keep alive, close on shutdown) in app/melcloud_client.py
+- [x] T052 Create app/melcloud_client.py with MelCloudClient wrapper class
+- [x] T053 Add async authenticate() method using pymelcloudhome MelCloudHomeClient.login() in app/melcloud_client.py
+- [x] T054 Add async list_devices() method using pymelcloudhome list_devices() in app/melcloud_client.py
+- [x] T055 Add async get_device_state() method using pymelcloudhome get_device_state() in app/melcloud_client.py
+- [x] T056 Add async set_device_state() method using pymelcloudhome set_device_state() in app/melcloud_client.py
+- [x] T057 Add exception handling for pymelcloudhome errors (LoginError, ApiError, DeviceNotFound) in app/melcloud_client.py
+- [x] T058 Add automatic re-authentication on 401 errors in app/melcloud_client.py
+- [x] T059 Add MelCloudClient instance lifecycle management (keep alive, close on shutdown) in app/melcloud_client.py
 
 ### Implementation Tasks - Polling Loop
 
-- [ ] T060 Add polling loop in app/main.py with configurable interval (default 60s)
-- [ ] T061 Add device discovery on first poll cycle in app/main.py
-- [ ] T062 Add state polling for all devices in app/main.py
-- [ ] T063 Add state change detection (compare with previous state) in app/main.py
-- [ ] T064 Add exponential backoff on polling errors using app/utils.py
-- [ ] T065 Add logging for poll cycles (start, device count, errors, duration) in app/main.py
+- [x] T060 Add polling loop in app/main.py with configurable interval (default 60s)
+- [x] T061 Add device discovery on first poll cycle in app/main.py
+- [x] T062 Add state polling for all devices in app/main.py
+- [x] T063 Add state change detection (compare with previous state) in app/main.py
+- [x] T064 Add exponential backoff on polling errors using app/utils.py
+- [x] T065 Add logging for poll cycles (start, device count, errors, duration) in app/main.py
 
 ### Acceptance Tests for Milestone 4 (US1, US2)
 
