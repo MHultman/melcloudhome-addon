@@ -6,6 +6,48 @@ from typing import Any
 from loguru import logger
 
 
+# Fields that contain sensitive data (case-insensitive matching)
+SENSITIVE_FIELDS = {
+    'password', 'pass', 'pwd', 'passwd',
+    'email', 'mail',
+    'token', 'access_token', 'refresh_token',
+    'api_key', 'apikey', 'api-key',
+    'secret', 'secret_key',
+    'auth', 'authorization',
+    'credential', 'credentials'
+}
+
+
+def sanitize_for_logging(data: Any) -> Any:
+    """
+    Recursively sanitize sensitive data in dictionaries and lists.
+    
+    Args:
+        data: Data structure to sanitize (dict, list, or primitive)
+        
+    Returns:
+        Sanitized copy of data with sensitive fields redacted
+    """
+    if isinstance(data, dict):
+        sanitized = {}
+        for key, value in data.items():
+            # Check if key is sensitive (case-insensitive)
+            if key.lower() in SENSITIVE_FIELDS:
+                sanitized[key] = "***REDACTED***"
+            else:
+                # Recursively sanitize nested structures
+                sanitized[key] = sanitize_for_logging(value)
+        return sanitized
+    
+    elif isinstance(data, list):
+        # Recursively sanitize list items
+        return [sanitize_for_logging(item) for item in data]
+    
+    else:
+        # Primitive type - return as-is
+        return data
+
+
 def sanitize_log_message(message: str) -> str:
     """
     Remove credentials from log messages.

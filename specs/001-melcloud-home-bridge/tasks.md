@@ -75,7 +75,7 @@
 - [x] T025 [P] Unit test: Invalid configuration raises ValidationError with clear message in tests/unit/test_config.py
 - [x] T026 [P] Unit test: Missing required fields are detected in tests/unit/test_config.py
 - [x] T027 [P] Unit test: Default values are applied correctly in tests/unit/test_config.py
-- [ ] T028 [P] Unit test: Log messages do not contain credentials in tests/unit/test_logging_conf.py
+- [x] T028 [P] Unit test: Log messages do not contain credentials in tests/unit/test_logging_conf.py
 - [x] T029 [P] Unit test: Exponential backoff calculates delays correctly in tests/unit/test_utils.py
 - [x] T030 Test: Integration test - Configuration loads from mock Supervisor environment in tests/integration/test_config_integration.py
 
