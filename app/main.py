@@ -6,7 +6,7 @@ import sys
 import gc
 import psutil
 from typing import Optional, List, Dict
-from datetime import datetime, timedelta
+from datetime import datetime
 from loguru import logger
 
 from app import __version__

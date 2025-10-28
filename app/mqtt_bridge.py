@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Optional, Dict, Any, Callable, List, Tuple
+from typing import Optional, Dict, Callable, List, Tuple
 from loguru import logger
 import paho.mqtt.client as mqtt
 
