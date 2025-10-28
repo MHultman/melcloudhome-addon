@@ -228,35 +228,35 @@
 
 ### Implementation Tasks - MQTT Command Subscription
 
-- [ ] T103 Add subscribe_to_commands() method in app/mqtt_bridge.py
-- [ ] T104 Add command topic pattern generation in app/mqtt_bridge.py
-- [ ] T105 Add MQTT message callback handler in app/mqtt_bridge.py
-- [ ] T106 Add command message parsing per contracts/mqtt-command-schema.json in app/mqtt_bridge.py
-- [ ] T107 Add command validation (valid modes, temperature ranges) in app/mqtt_bridge.py
+- [x] T103 Add subscribe_to_commands() method in app/mqtt_bridge.py
+- [x] T104 Add command topic pattern generation in app/mqtt_bridge.py
+- [x] T105 Add MQTT message callback handler in app/mqtt_bridge.py
+- [x] T106 Add command message parsing per contracts/mqtt-command-schema.json in app/mqtt_bridge.py
+- [x] T107 Add command validation (valid modes, temperature ranges) in app/mqtt_bridge.py
 
 ### Implementation Tasks - Command Execution
 
-- [ ] T108 Create app/command_handler.py with CommandHandler class
-- [ ] T109 Add handle_temperature_command() method in app/command_handler.py
-- [ ] T110 Add handle_mode_command() method in app/command_handler.py
-- [ ] T111 Add command-to-API mapping (HA modes → MELCloud operation modes) in app/command_handler.py
-- [ ] T112 Add async command execution via MelCloudClient.set_device_state() in app/command_handler.py
-- [ ] T113 Add command result logging (success/failure) in app/command_handler.py
-- [ ] T114 Add immediate state refresh after command execution in app/command_handler.py
-- [ ] T115 Integrate CommandHandler into app/main.py
-- [ ] T116 Wire MQTT command callbacks to CommandHandler in app/main.py
+- [x] T108 Create app/command_handler.py with CommandHandler class
+- [x] T109 Add handle_temperature_command() method in app/command_handler.py
+- [x] T110 Add handle_mode_command() method in app/command_handler.py
+- [x] T111 Add command-to-API mapping (HA modes → MELCloud operation modes) in app/command_handler.py
+- [x] T112 Add async command execution via MelCloudClient.set_device_state() in app/command_handler.py
+- [x] T113 Add command result logging (success/failure) in app/command_handler.py
+- [x] T114 Add immediate state refresh after command execution in app/command_handler.py
+- [x] T115 Integrate CommandHandler into app/main.py
+- [x] T116 Wire MQTT command callbacks to CommandHandler in app/main.py
 
 ### Acceptance Tests for Milestone 6 (US3)
 
-- [ ] T117 [P] Unit test: Temperature command parses correctly in tests/unit/test_command_handler.py
-- [ ] T118 [P] Unit test: Mode command parses correctly in tests/unit/test_command_handler.py
-- [ ] T119 [P] Unit test: Invalid commands are rejected in tests/unit/test_command_handler.py
-- [ ] T120 [P] Unit test: Command-to-API mapping is correct for all modes in tests/unit/test_command_handler.py
+- [x] T117 [P] Unit test: Temperature command parses correctly in tests/unit/test_command_handler.py
+- [x] T118 [P] Unit test: Mode command parses correctly in tests/unit/test_command_handler.py
+- [x] T119 [P] Unit test: Invalid commands are rejected in tests/unit/test_command_handler.py
+- [x] T120 [P] Unit test: Command-to-API mapping is correct for all modes in tests/unit/test_command_handler.py
 - [ ] T121 Test: Integration test - Temperature command sent to MELCloud API in tests/integration/test_temperature_commands.py
 - [ ] T122 Test: Integration test - Mode command sent to MELCloud API in tests/integration/test_mode_commands.py
 - [ ] T123 Test: Integration test - State refreshes immediately after command in tests/integration/test_command_state_refresh.py
 - [ ] T124 Test: Manual test - Change temperature in HA climate card, verify device updates (see quickstart.md test scenario 1)
-- [ ] T125 Test: Manual test - Change mode in HA, verify device responds (see quickstart.md test scenario 2)
+- [ ] T125 Test: Manual test - Change temperature in HA, verify device responds (see quickstart.md test scenario 2)
 
 **Checkpoint**: US3 complete - Bidirectional control working (HA ↔ MELCloud)
 

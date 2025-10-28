@@ -3,7 +3,6 @@
 import asyncio
 import signal
 import sys
-import time
 from typing import Optional, List, Dict
 from loguru import logger
 
@@ -14,6 +13,7 @@ from app.melcloud_client import MelCloudClient, LoginError, ApiError
 from app.models import Credentials, ClimateDevice
 from app.utils import ExponentialBackoff
 from app.mqtt_bridge import MQTTBridge
+from app.command_handler import CommandHandler
 
 
 class Application:
@@ -26,6 +26,7 @@ class Application:
         self._shutdown_event = asyncio.Event()
         self.melcloud_client: Optional[MelCloudClient] = None
         self.mqtt_bridge: Optional[MQTTBridge] = None
+        self.command_handler: Optional[CommandHandler] = None
         self.devices: List[ClimateDevice] = []
         self.device_states: Dict[str, Dict] = {}  # device_id -> last known state
         self.backoff = ExponentialBackoff()
@@ -90,6 +91,10 @@ class Application:
                 logger.error(f"Failed to connect to MQTT broker: {e}")
                 logger.error("Please verify your MQTT broker configuration")
                 return 1
+            
+            # Create command handler
+            self.command_handler = CommandHandler(self.melcloud_client)
+            logger.debug("Command handler initialized")
             
             # Mark as running
             self.running = True
@@ -174,6 +179,17 @@ class Application:
                     for device in self.devices:
                         await self.mqtt_bridge.publish_discovery(device)
                         await self.mqtt_bridge.publish_availability(device, device.online)
+                    
+                    # Subscribe to command topics
+                    logger.info("Subscribing to command topics...")
+                    for device in self.devices:
+                        # Subscribe with callback that handles both temperature and mode
+                        await self.mqtt_bridge.subscribe_to_commands(
+                            device,
+                            lambda topic, payload, dev=device: asyncio.create_task(
+                                self._handle_command(dev, topic, payload)
+                            )
+                        )
                     
                     discovered = True
                     
@@ -270,6 +286,65 @@ class Application:
         # TODO: Close health server (Phase 8)
         
         logger.info("Shutdown complete")
+    
+    async def _handle_command(
+        self,
+        device: ClimateDevice,
+        topic: str,
+        payload: str
+    ) -> None:
+        """
+        Handle command from MQTT (temperature or mode).
+        
+        Args:
+            device: Target device
+            topic: MQTT topic that received the command
+            payload: MQTT payload
+        """
+        assert self.command_handler is not None, "Command handler not initialized"
+        assert self.mqtt_bridge is not None, "MQTT bridge not initialized"
+        
+        # Route based on topic
+        if "set_temperature" in topic:
+            # Parse temperature from payload
+            temperature = self.command_handler.parse_temperature_command(payload)
+            if temperature is None:
+                logger.warning(
+                    f"Failed to parse temperature command for {device.device_name}: {payload}"
+                )
+                return
+            
+            # Execute command
+            success = await self.command_handler.handle_temperature_command(
+                device, temperature
+            )
+            
+            if success:
+                # Update stored state
+                self.device_states[device.device_id] = device.state.copy()
+                # Publish updated state to MQTT
+                await self.mqtt_bridge.publish_state(device)
+        
+        elif "set_mode" in topic:
+            # Parse mode from payload
+            mode = self.command_handler.parse_mode_command(payload)
+            if mode is None:
+                logger.warning(
+                    f"Failed to parse mode command for {device.device_name}: {payload}"
+                )
+                return
+            
+            # Execute command
+            success = await self.command_handler.handle_mode_command(device, mode)
+            
+            if success:
+                # Update stored state
+                self.device_states[device.device_id] = device.state.copy()
+                # Publish updated state to MQTT
+                await self.mqtt_bridge.publish_state(device)
+        
+        else:
+            logger.warning(f"Unknown command topic: {topic}")
 
 
 async def main() -> int:
