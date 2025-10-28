@@ -77,7 +77,7 @@
 - [x] T027 [P] Unit test: Default values are applied correctly in tests/unit/test_config.py
 - [ ] T028 [P] Unit test: Log messages do not contain credentials in tests/unit/test_logging_conf.py
 - [x] T029 [P] Unit test: Exponential backoff calculates delays correctly in tests/unit/test_utils.py
-- [ ] T030 Test: Integration test - Configuration loads from mock Supervisor environment in tests/integration/test_config_integration.py
+- [x] T030 Test: Integration test - Configuration loads from mock Supervisor environment in tests/integration/test_config_integration.py
 
 **Checkpoint**: Foundation ready - core business logic can now begin
 
