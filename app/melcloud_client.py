@@ -5,20 +5,7 @@ from typing import List, Dict, Any, Optional
 from enum import Enum
 from loguru import logger
 
-# pymelcloudhome imports
-try:
-    from pymelcloudhome import (  # type: ignore[import-untyped]
-        melcloud_login,
-        list_devices,
-        get_device_state,
-        set_device_state,
-    )
-except ImportError:
-    # For type checking when pymelcloudhome not installed
-    melcloud_login = None  # type: ignore
-    list_devices = None  # type: ignore
-    get_device_state = None  # type: ignore
-    set_device_state = None  # type: ignore
+from pymelcloudhome import MelCloudHomeClient  # type: ignore[import-untyped]
 
 from app.models import ClimateDevice, Credentials
 from app.utils import ExponentialBackoff
@@ -56,7 +43,7 @@ class DeviceNotFoundError(MelCloudError):
 
 class MelCloudClient:
     """
-    Async wrapper for pymelcloudhome synchronous API.
+    Async wrapper for pymelcloudhome MelCloudHomeClient.
     
     Handles authentication, device discovery, state polling, and command execution.
     Includes network resilience with exponential backoff and retry logic.
@@ -74,8 +61,10 @@ class MelCloudClient:
             credentials: MELCloud account credentials
         """
         self.credentials = credentials
+        self._client: Optional[MelCloudHomeClient] = None
         self._session_token: Optional[str] = None
         self._devices: List[Any] = []
+        self._device_types: Dict[str, str] = {}  # device_id -> device_type mapping
         self._authenticated = False
         self._logger = logger.bind(component="melcloud_client")
         self._backoff = ExponentialBackoff(
@@ -90,7 +79,7 @@ class MelCloudClient:
         """
         Authenticate with MELCloud and obtain session token.
         
-        Uses pymelcloudhome's melcloud_login() which handles Playwright-based
+        Uses pymelcloudhome's MelCloudHomeClient.login() which handles Playwright-based
         web authentication for JavaScript-heavy MELCloud login flow.
         
         Raises:
@@ -122,29 +111,20 @@ class MelCloudClient:
             import time
             start_time = time.time()
             
-            # Run sync melcloud_login in thread pool
-            loop = asyncio.get_event_loop()
-            self._session_token = await loop.run_in_executor(
-                None,
-                melcloud_login,
-                self.credentials.email,
-                self.credentials.password
+            # Create client and login
+            self._client = MelCloudHomeClient()
+            await self._client.login(
+                email=self.credentials.email,
+                password=self.credentials.password
             )
             
             duration = time.time() - start_time
-            
-            if not self._session_token:
-                raise LoginError("Authentication returned empty token")
             
             self._authenticated = True
             self._auth_retry_count = 0  # Reset counter on success
             self._logger.info(
                 "Successfully authenticated with MELCloud",
                 extra={"operation": "authenticate", "duration_seconds": f"{duration:.2f}"}
-            )
-            self._logger.debug(
-                f"Session token obtained (length: {len(self._session_token)})",
-                extra={"operation": "authenticate"}
             )
             
         except Exception as e:
@@ -177,25 +157,35 @@ class MelCloudClient:
         Raises:
             ApiError: If device list request fails
         """
-        if not self._authenticated:
+        if not self._authenticated or not self._client:
             raise ApiError("Not authenticated - call authenticate() first")
         
         self._logger.debug("Fetching device list from MELCloud...")
         
         try:
-            # Run sync list_devices in thread pool
-            loop = asyncio.get_event_loop()
-            raw_devices = await loop.run_in_executor(
-                None,
-                list_devices,
-                self._session_token
-            )
+            # Get devices from client
+            raw_devices = await self._client.list_devices()
             
             if raw_devices is None:
                 raw_devices = []
             
             # Cache raw devices for later use
             self._devices = raw_devices
+            
+            # Store device types for set_device_state calls
+            for device in raw_devices:
+                device_id = getattr(device, 'id', None) or getattr(device, 'device_id', None)
+                device_type = getattr(device, 'type', None) or getattr(device, 'device_type', 'unknown')
+                if device_id:
+                    self._device_types[str(device_id)] = str(device_type)
+                    self._logger.debug(
+                        f"Cached device type for {device_id}: {device_type}",
+                        extra={
+                            "operation": "list_devices",
+                            "device_id": device_id,
+                            "device_type": device_type
+                        }
+                    )
             
             # Convert to ClimateDevice instances
             devices = []
@@ -235,7 +225,7 @@ class MelCloudClient:
             DeviceNotFoundError: If device ID is invalid
             ApiError: If state request fails
         """
-        if not self._authenticated:
+        if not self._authenticated or not self._client:
             raise ApiError("Not authenticated - call authenticate() first")
         
         self._logger.debug(
@@ -247,14 +237,8 @@ class MelCloudClient:
             import time
             start_time = time.time()
             
-            # Run sync get_device_state in thread pool
-            loop = asyncio.get_event_loop()
-            state = await loop.run_in_executor(
-                None,
-                get_device_state,
-                self._session_token,
-                device_id
-            )
+            # Get device state from client
+            state = await self._client.get_device_state(device_id)
             
             duration = time.time() - start_time
             
@@ -314,14 +298,23 @@ class MelCloudClient:
             DeviceNotFoundError: If device ID is invalid
             ApiError: If state update fails
         """
-        if not self._authenticated:
+        if not self._authenticated or not self._client:
             raise ApiError("Not authenticated - call authenticate() first")
+        
+        # Get device type from cache
+        device_type = self._device_types.get(device_id)
+        if not device_type:
+            raise DeviceNotFoundError(
+                f"Device {device_id} not found in cache. "
+                "Call list_devices() first to populate device cache."
+            )
         
         self._logger.info(
             f"Updating device {device_id} state: {state_changes}",
             extra={
                 "operation": "set_device_state",
                 "device_id": device_id,
+                "device_type": device_type,
                 "state_changes": state_changes
             }
         )
@@ -334,15 +327,8 @@ class MelCloudClient:
             import time
             start_time = time.time()
             
-            # Run sync set_device_state in thread pool
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
-                None,
-                set_device_state,
-                self._session_token,
-                device_id,
-                state_changes
-            )
+            # Update device state via client (requires device_id, device_type, state_data)
+            await self._client.set_device_state(device_id, device_type, state_changes)
             
             duration = time.time() - start_time
             
@@ -372,6 +358,7 @@ class MelCloudClient:
                 extra={
                     "operation": "set_device_state",
                     "device_id": device_id,
+                    "device_type": device_type,
                     "state_changes": state_changes,
                     "error_type": type(e).__name__,
                     "resolution": "Check device availability and network connectivity"
@@ -516,9 +503,20 @@ class MelCloudClient:
     async def close(self) -> None:
         """Clean up resources and close connections."""
         self._logger.debug("Closing MELCloud client")
+        
+        # Close the pymelcloudhome client if it exists
+        if self._client:
+            try:
+                await self._client.close()
+                self._logger.debug("Closed pymelcloudhome client connection")
+            except Exception as e:
+                self._logger.warning(f"Error closing pymelcloudhome client: {e}")
+        
         self._authenticated = False
         self._session_token = None
         self._devices = []
+        self._device_types = {}
+        self._client = None
     
     @property
     def is_authenticated(self) -> bool:

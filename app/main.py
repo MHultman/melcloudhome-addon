@@ -4,7 +4,7 @@ import asyncio
 import signal
 import sys
 import gc
-import psutil
+import psutil  # type: ignore[import-untyped]
 from typing import Optional, List, Dict
 from datetime import datetime
 from loguru import logger
