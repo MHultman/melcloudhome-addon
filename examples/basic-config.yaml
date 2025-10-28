@@ -1,0 +1,14 @@
+# Basic Configuration Example
+# Minimal configuration using default values
+
+melcloud_email: "your.email@example.com"
+melcloud_password: "your-secure-password"
+mqtt_host: "core-mosquitto"
+
+# This configuration uses the following defaults:
+# - mqtt_port: 1883
+# - mqtt_base_topic: homeassistant
+# - poll_interval: 60
+# - log_level: INFO
+# - mqtt_username: (not set - no authentication)
+# - mqtt_password: (not set - no authentication)

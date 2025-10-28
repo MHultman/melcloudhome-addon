@@ -1,0 +1,12 @@
+# Mock Configuration for Testing
+# This file is used by integration tests
+
+melcloud_email: "test@example.com"
+melcloud_password: "test-password-123"
+mqtt_host: "localhost"
+mqtt_port: 1883
+mqtt_username: "test-user"
+mqtt_password: "test-pass"
+mqtt_base_topic: "homeassistant"
+poll_interval: 30
+log_level: "DEBUG"

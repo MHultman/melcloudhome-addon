@@ -365,33 +365,33 @@
 
 ### Implementation Tasks - User Documentation
 
-- [ ] T171 [P] Create README.md with project description and features
-- [ ] T172 [P] Add prerequisites section to README.md
-- [ ] T173 [P] Add installation instructions to README.md (link to quickstart.md)
-- [ ] T174 [P] Add configuration reference to README.md (all options with descriptions)
-- [ ] T175 [P] Add troubleshooting section to README.md (common errors and solutions)
-- [ ] T176 [P] Add FAQ section to README.md
-- [ ] T177 [P] Create CHANGELOG.md with initial release notes (v1.0.0)
+- [x] T171 [P] Create README.md with project description and features
+- [x] T172 [P] Add prerequisites section to README.md
+- [x] T173 [P] Add installation instructions to README.md (link to quickstart.md)
+- [x] T174 [P] Add configuration reference to README.md (all options with descriptions)
+- [x] T175 [P] Add troubleshooting section to README.md (common errors and solutions)
+- [x] T176 [P] Add FAQ section to README.md
+- [x] T177 [P] Create CHANGELOG.md with initial release notes (v1.0.0)
 
 ### Implementation Tasks - Example Configurations
 
-- [ ] T178 [P] Create examples/basic-config.yaml with minimal configuration
-- [ ] T179 [P] Create examples/advanced-config.yaml with all options
-- [ ] T180 [P] Create examples/docker-compose.yaml for local testing
+- [x] T178 [P] Create examples/basic-config.yaml with minimal configuration
+- [x] T179 [P] Create examples/advanced-config.yaml with all options
+- [x] T180 [P] Create examples/docker-compose.yaml for local testing
 - [ ] T181 [P] Add architecture diagram to docs/ (startup flow, data flow)
 
 ### Implementation Tasks - Test Fixtures
 
-- [ ] T182 [P] Create tests/fixtures/mock_melcloud_devices.json with sample device data
-- [ ] T183 [P] Create tests/fixtures/mock_config.yaml with test configuration
-- [ ] T184 [P] Create tests/conftest.py with pytest fixtures for mocks
+- [x] T182 [P] Create tests/fixtures/mock_melcloud_devices.json with sample device data
+- [x] T183 [P] Create tests/fixtures/mock_config.yaml with test configuration
+- [x] T184 [P] Create tests/conftest.py with pytest fixtures for mocks
 
 ### Implementation Tasks - CI/CD
 
-- [ ] T185 [P] Create .github/workflows/test.yaml with pytest runner
-- [ ] T186 [P] Create .github/workflows/build.yaml with multi-arch Docker builds
-- [ ] T187 [P] Add linting to CI (ruff check .)
-- [ ] T188 [P] Add coverage reporting to CI
+- [x] T185 [P] Create .github/workflows/test.yaml with pytest runner
+- [x] T186 [P] Create .github/workflows/build.yaml with multi-arch Docker builds
+- [x] T187 [P] Add linting to CI (ruff check .)
+- [x] T188 [P] Add coverage reporting to CI
 
 ### Acceptance Tests for Milestone 9
 

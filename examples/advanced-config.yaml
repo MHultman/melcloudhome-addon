@@ -1,0 +1,30 @@
+# Advanced Configuration Example
+# All available options with descriptions
+
+# MELCloud Credentials (REQUIRED)
+melcloud_email: "your.email@example.com"
+melcloud_password: "your-secure-password"
+
+# MQTT Broker Configuration
+mqtt_host: "192.168.1.100"  # MQTT broker hostname or IP
+mqtt_port: 1883              # MQTT broker port (default: 1883)
+mqtt_username: "mqtt-user"   # Optional: MQTT authentication username
+mqtt_password: "mqtt-pass"   # Optional: MQTT authentication password
+mqtt_base_topic: "homeassistant"  # MQTT discovery topic prefix
+
+# Polling Configuration
+poll_interval: 60  # Seconds between MELCloud API polls (minimum: 30, default: 60)
+                   # Lower values = faster updates but more API load
+                   # Recommended: 60-120 seconds
+
+# Logging Configuration
+log_level: "INFO"  # Options: DEBUG, INFO, WARNING, ERROR
+                   # Use DEBUG for troubleshooting
+                   # Use INFO for normal operation
+                   # Use WARNING to reduce log verbosity
+
+# Notes:
+# - All passwords are securely stored by Home Assistant
+# - Credentials are never logged (automatic sanitization)
+# - poll_interval affects update latency: lower = faster, but more API calls
+# - DEBUG logging includes detailed API requests and MQTT operations

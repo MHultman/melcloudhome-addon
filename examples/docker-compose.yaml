@@ -1,0 +1,54 @@
+# Docker Compose for Local Development
+# Use this for testing the add-on locally without Home Assistant
+
+version: '3.8'
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: melcloud-mqtt
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+    restart: unless-stopped
+
+  melcloud-bridge:
+    build: .
+    container_name: melcloud-bridge
+    environment:
+      - MELCLOUD_EMAIL=your.email@example.com
+      - MELCLOUD_PASSWORD=your-secure-password
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - MQTT_BASE_TOPIC=homeassistant
+      - POLL_INTERVAL=60
+      - LOG_LEVEL=DEBUG
+    ports:
+      - "8099:8099"  # Health check endpoint
+    depends_on:
+      - mosquitto
+    restart: unless-stopped
+
+volumes:
+  mosquitto_data:
+  mosquitto_log:
+
+# To use this docker-compose.yaml:
+#
+# 1. Create mosquitto.conf in the same directory:
+#    listener 1883
+#    allow_anonymous true
+#
+# 2. Update environment variables with your MELCloud credentials
+#
+# 3. Run: docker-compose up -d
+#
+# 4. Check health: curl http://localhost:8099/healthz
+#
+# 5. View logs: docker-compose logs -f melcloud-bridge
+#
+# 6. Stop: docker-compose down
