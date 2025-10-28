@@ -82,12 +82,12 @@ def setup_logging(log_level: str = "INFO") -> None:
     logger.info(f"Logging initialized at {log_level} level")
 
 
-def _sanitize_record(record: dict) -> bool:
+def _sanitize_record(record: Any) -> bool:
     """
     Sanitize log record message before output.
     
     Args:
-        record: Loguru log record
+        record: Loguru log record (Record type from loguru)
         
     Returns:
         True to emit the record, False to filter it out
