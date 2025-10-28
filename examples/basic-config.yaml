@@ -4,7 +4,6 @@
 melcloud_email: "your.email@example.com"
 melcloud_password: "your-secure-password"
 mqtt_host: "core-mosquitto"
-
 # This configuration uses the following defaults:
 # - mqtt_port: 1883
 # - mqtt_base_topic: homeassistant

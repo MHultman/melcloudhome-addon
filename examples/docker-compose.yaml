@@ -1,7 +1,7 @@
 # Docker Compose for Local Development
 # Use this for testing the add-on locally without Home Assistant
 
-version: '3.8'
+version: "3.8"
 
 services:
   mosquitto:
@@ -28,7 +28,7 @@ services:
       - POLL_INTERVAL=60
       - LOG_LEVEL=DEBUG
     ports:
-      - "8099:8099"  # Health check endpoint
+      - "8099:8099" # Health check endpoint
     depends_on:
       - mosquitto
     restart: unless-stopped
@@ -36,7 +36,6 @@ services:
 volumes:
   mosquitto_data:
   mosquitto_log:
-
 # To use this docker-compose.yaml:
 #
 # 1. Create mosquitto.conf in the same directory:
