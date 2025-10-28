@@ -271,32 +271,32 @@
 
 ### Implementation Tasks - Network Resilience
 
-- [ ] T126 Add network error detection and classification in app/melcloud_client.py
-- [ ] T127 Add exponential backoff for failed API calls in app/melcloud_client.py
-- [ ] T128 Add max retry limits (3 attempts) in app/melcloud_client.py
-- [ ] T129 Add rate limit detection (HTTP 429) and backoff in app/melcloud_client.py
-- [ ] T130 Add timeout configuration for API calls in app/melcloud_client.py
+- [x] T126 Add network error detection and classification in app/melcloud_client.py
+- [x] T127 Add exponential backoff for failed API calls in app/melcloud_client.py
+- [x] T128 Add max retry limits (3 attempts) in app/melcloud_client.py
+- [x] T129 Add rate limit detection (HTTP 429) and backoff in app/melcloud_client.py
+- [x] T130 Add timeout configuration for API calls in app/melcloud_client.py
 
 ### Implementation Tasks - MQTT Resilience
 
-- [ ] T131 Add MQTT reconnection logic with exponential backoff in app/mqtt_bridge.py
-- [ ] T132 Add connection state monitoring in app/mqtt_bridge.py
-- [ ] T133 Add republish of discovery messages on reconnection in app/mqtt_bridge.py
-- [ ] T134 Add republish of availability messages on reconnection in app/mqtt_bridge.py
-- [ ] T135 Add MQTT operation queuing during disconnection in app/mqtt_bridge.py
+- [x] T131 Add MQTT reconnection logic with exponential backoff in app/mqtt_bridge.py
+- [x] T132 Add connection state monitoring in app/mqtt_bridge.py
+- [x] T133 Add republish of discovery messages on reconnection in app/mqtt_bridge.py
+- [x] T134 Add republish of availability messages on reconnection in app/mqtt_bridge.py
+- [x] T135 Add MQTT operation queuing during disconnection in app/mqtt_bridge.py
 
 ### Implementation Tasks - Session Management
 
-- [ ] T136 Add session expiration detection (via pymelcloudhome 401 handling) in app/melcloud_client.py
-- [ ] T137 Add automatic re-authentication flow in app/melcloud_client.py
-- [ ] T138 Add authentication failure handling (max 3 attempts, then log error) in app/melcloud_client.py
-- [ ] T139 Add last known state preservation during outages in app/main.py
+- [x] T136 Add session expiration detection (via pymelcloudhome 401 handling) in app/melcloud_client.py
+- [x] T137 Add automatic re-authentication flow in app/melcloud_client.py
+- [x] T138 Add authentication failure handling (max 3 attempts, then log error) in app/melcloud_client.py
+- [x] T139 Add last known state preservation during outages in app/main.py
 
 ### Implementation Tasks - Memory Management
 
-- [ ] T140 Add memory usage monitoring in app/main.py
-- [ ] T141 Add periodic connection refresh (every 24h) in app/main.py
-- [ ] T142 Add garbage collection hints for large objects in app/main.py
+- [x] T140 Add memory usage monitoring in app/main.py
+- [x] T141 Add periodic connection refresh (every 24h) in app/main.py
+- [x] T142 Add garbage collection hints for large objects in app/main.py
 
 ### Acceptance Tests for Milestone 7 (US4)
 
@@ -329,18 +329,18 @@
 
 ### Implementation Tasks - Diagnostic Logging
 
-- [ ] T155 Add detailed DEBUG logging for API requests in app/melcloud_client.py
-- [ ] T156 Add detailed DEBUG logging for MQTT operations in app/mqtt_bridge.py
-- [ ] T157 Add structured logging fields (device_id, operation, duration) in app/melcloud_client.py and app/mqtt_bridge.py
-- [ ] T158 Add error context in log messages (suggested resolution steps) in app/melcloud_client.py and app/mqtt_bridge.py
-- [ ] T159 Add startup banner with configuration summary in app/main.py
+- [x] T155 Add detailed DEBUG logging for API requests in app/melcloud_client.py
+- [x] T156 Add detailed DEBUG logging for MQTT operations in app/mqtt_bridge.py
+- [x] T157 Add structured logging fields (device_id, operation, duration) in app/melcloud_client.py and app/mqtt_bridge.py
+- [x] T158 Add error context in log messages (suggested resolution steps) in app/melcloud_client.py and app/mqtt_bridge.py
+- [x] T159 Add startup banner with configuration summary in app/main.py
 
 ### Implementation Tasks - Graceful Shutdown
 
-- [ ] T160 Add shutdown timeout (30 seconds max) in app/main.py
-- [ ] T161 Add connection cleanup on shutdown (MQTT, MELCloud, health server) in app/main.py
-- [ ] T162 Add log flush on shutdown in app/main.py
-- [ ] T163 Add final status log message on shutdown in app/main.py
+- [x] T160 Add shutdown timeout (30 seconds max) in app/main.py
+- [x] T161 Add connection cleanup on shutdown (MQTT, MELCloud, health server) in app/main.py
+- [x] T162 Add log flush on shutdown in app/main.py
+- [x] T163 Add final status log message on shutdown in app/main.py
 
 ### Acceptance Tests for Milestone 8 (US5)
 

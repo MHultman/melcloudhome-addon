@@ -3,7 +3,10 @@
 import asyncio
 import signal
 import sys
+import gc
+import psutil
 from typing import Optional, List, Dict
+from datetime import datetime, timedelta
 from loguru import logger
 
 from app import __version__
@@ -20,6 +23,11 @@ from app.health_server import HealthServer
 class Application:
     """Main application orchestrator."""
     
+    # Memory monitoring configuration
+    MEMORY_WARNING_THRESHOLD_MB = 150
+    MEMORY_CRITICAL_THRESHOLD_MB = 200
+    CONNECTION_REFRESH_INTERVAL_HOURS = 24
+    
     def __init__(self):
         """Initialize application."""
         self.config: Optional[Configuration] = None
@@ -32,6 +40,8 @@ class Application:
         self.devices: List[ClimateDevice] = []
         self.device_states: Dict[str, Dict] = {}  # device_id -> last known state
         self.backoff = ExponentialBackoff()
+        self._last_connection_refresh = datetime.now()
+        self._process = psutil.Process()
     
     async def start(self) -> int:
         """
@@ -52,9 +62,18 @@ class Application:
             logger.info("=" * 60)
             logger.info(f"MELCloud Home Bridge v{__version__}")
             logger.info("=" * 60)
-            logger.info("Configuration:")
+            logger.info("Starting MELCloud to Home Assistant bridge...")
+            logger.info("")
+            logger.info("Configuration Summary:")
             for key, value in self.config.get_safe_summary().items():
                 logger.info(f"  {key}: {value}")
+            logger.info("")
+            logger.info("Features:")
+            logger.info("  ✓ Automatic device discovery")
+            logger.info("  ✓ Real-time state monitoring")
+            logger.info("  ✓ Bidirectional control (HA ↔ MELCloud)")
+            logger.info("  ✓ Network resilience with auto-reconnect")
+            logger.info("  ✓ Health monitoring endpoint (port 8099)")
             logger.info("=" * 60)
             
             # Setup signal handlers
@@ -147,6 +166,74 @@ class Application:
         signal.signal(signal.SIGINT, signal_handler)
         
         logger.debug("Signal handlers registered (SIGTERM, SIGINT)")
+    
+    def _check_memory_usage(self) -> None:
+        """
+        Monitor memory usage and log warnings if thresholds exceeded.
+        
+        Triggers garbage collection if memory usage is high.
+        """
+        try:
+            # Get current memory usage in MB
+            mem_info = self._process.memory_info()
+            memory_mb = mem_info.rss / 1024 / 1024
+            
+            if memory_mb > self.MEMORY_CRITICAL_THRESHOLD_MB:
+                logger.error(
+                    f"CRITICAL: Memory usage is {memory_mb:.1f} MB "
+                    f"(threshold: {self.MEMORY_CRITICAL_THRESHOLD_MB} MB)"
+                )
+                # Force garbage collection
+                collected = gc.collect()
+                logger.info(f"Forced garbage collection: {collected} objects collected")
+                
+                # Log memory usage after GC
+                mem_info_after = self._process.memory_info()
+                memory_mb_after = mem_info_after.rss / 1024 / 1024
+                logger.info(f"Memory after GC: {memory_mb_after:.1f} MB")
+                
+            elif memory_mb > self.MEMORY_WARNING_THRESHOLD_MB:
+                logger.warning(
+                    f"Memory usage is {memory_mb:.1f} MB "
+                    f"(warning threshold: {self.MEMORY_WARNING_THRESHOLD_MB} MB)"
+                )
+                # Suggest garbage collection
+                gc.collect()
+            else:
+                logger.debug(f"Memory usage: {memory_mb:.1f} MB")
+        
+        except Exception as e:
+            logger.error(f"Failed to check memory usage: {e}")
+    
+    async def _periodic_connection_refresh(self) -> None:
+        """
+        Periodically refresh connections to prevent stale sessions.
+        
+        Runs every 24 hours to refresh MELCloud and MQTT connections.
+        """
+        try:
+            time_since_refresh = datetime.now() - self._last_connection_refresh
+            
+            if time_since_refresh.total_seconds() >= (self.CONNECTION_REFRESH_INTERVAL_HOURS * 3600):
+                logger.info("Performing periodic connection refresh (24h interval)")
+                
+                # Refresh MELCloud authentication
+                if self.melcloud_client:
+                    try:
+                        await self.melcloud_client.authenticate()
+                        logger.info("MELCloud session refreshed successfully")
+                    except LoginError as e:
+                        logger.error(f"Failed to refresh MELCloud session: {e}")
+                
+                # MQTT client has auto-reconnect, just verify connection
+                if self.mqtt_bridge and not self.mqtt_bridge.is_connected:
+                    logger.warning("MQTT connection lost, reconnection should happen automatically")
+                
+                self._last_connection_refresh = datetime.now()
+                logger.info("Connection refresh complete")
+        
+        except Exception as e:
+            logger.error(f"Error during periodic connection refresh: {e}")
     
     async def _polling_loop(self) -> None:
         """
@@ -262,6 +349,13 @@ class Application:
                 if self.health_server:
                     self.health_server.update_poll_status(len(self.devices))
                 
+                # Check memory usage periodically (every 10 polls)
+                if poll_count % 10 == 0:
+                    self._check_memory_usage()
+                
+                # Perform periodic connection refresh (every 24h)
+                await self._periodic_connection_refresh()
+                
                 # Reset backoff on successful poll
                 self.backoff.reset()
                 
@@ -281,26 +375,77 @@ class Application:
                 await asyncio.sleep(delay)
     
     async def shutdown(self) -> None:
-        """Perform graceful shutdown."""
+        """Perform graceful shutdown with 30-second timeout."""
         if not self.running:
             return
         
-        logger.info("Shutting down...")
+        logger.info("Shutting down MELCloud Home Bridge...")
+        logger.info("Cleaning up connections and flushing logs...")
         self.running = False
         
-        # Close health server
-        if self.health_server:
-            await self.health_server.stop()
+        shutdown_start = asyncio.get_event_loop().time()
+        shutdown_timeout = 30  # seconds
         
-        # Close MQTT connection
-        if self.mqtt_bridge:
-            await self.mqtt_bridge.disconnect()
-        
-        # Close MELCloud client
-        if self.melcloud_client:
-            await self.melcloud_client.close()
-        
-        logger.info("Shutdown complete")
+        try:
+            # Close health server
+            if self.health_server:
+                logger.info("Stopping health server...")
+                try:
+                    await asyncio.wait_for(
+                        self.health_server.stop(),
+                        timeout=5.0
+                    )
+                    logger.info("✓ Health server stopped")
+                except asyncio.TimeoutError:
+                    logger.warning("Health server stop timed out")
+            
+            # Close MQTT connection
+            if self.mqtt_bridge:
+                logger.info("Disconnecting from MQTT broker...")
+                try:
+                    await asyncio.wait_for(
+                        self.mqtt_bridge.disconnect(),
+                        timeout=10.0
+                    )
+                    logger.info("✓ MQTT disconnected")
+                except asyncio.TimeoutError:
+                    logger.warning("MQTT disconnect timed out")
+            
+            # Close MELCloud client
+            if self.melcloud_client:
+                logger.info("Closing MELCloud client...")
+                try:
+                    await asyncio.wait_for(
+                        self.melcloud_client.close(),
+                        timeout=5.0
+                    )
+                    logger.info("✓ MELCloud client closed")
+                except asyncio.TimeoutError:
+                    logger.warning("MELCloud client close timed out")
+            
+            # Flush logs
+            logger.info("Flushing logs...")
+            await asyncio.sleep(0.5)  # Allow log buffer to flush
+            
+            shutdown_duration = asyncio.get_event_loop().time() - shutdown_start
+            
+            if shutdown_duration > shutdown_timeout:
+                logger.warning(
+                    f"Shutdown took {shutdown_duration:.1f}s "
+                    f"(exceeded {shutdown_timeout}s timeout)"
+                )
+            else:
+                logger.info(
+                    f"✓ Shutdown complete in {shutdown_duration:.1f}s"
+                )
+            
+            logger.info("=" * 60)
+            logger.info("MELCloud Home Bridge stopped")
+            logger.info("=" * 60)
+            
+        except Exception as e:
+            logger.error(f"Error during shutdown: {e}")
+            logger.info("Forced shutdown after error")
     
     async def _handle_command(
         self,

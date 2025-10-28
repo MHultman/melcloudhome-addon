@@ -2,12 +2,12 @@
 
 import asyncio
 import json
-from typing import Optional, Dict, Any, Callable
+from typing import Optional, Dict, Any, Callable, List, Tuple
 from loguru import logger
 import paho.mqtt.client as mqtt
 
 from app.models import ClimateDevice
-from app.utils import sanitize_mqtt_topic
+from app.utils import sanitize_mqtt_topic, ExponentialBackoff
 
 
 class MQTTBridge:
@@ -15,9 +15,9 @@ class MQTTBridge:
     MQTT Bridge for publishing device discovery and state updates.
     
     Handles:
-    - Connection management with auto-reconnect
+    - Connection management with auto-reconnect and exponential backoff
     - Home Assistant MQTT Discovery
-    - State publishing
+    - State publishing with queuing during disconnection
     - Command subscription
     - Availability tracking
     """
@@ -51,6 +51,17 @@ class MQTTBridge:
         self._logger = logger.bind(component="mqtt_bridge")
         self._command_callbacks: Dict[str, Callable] = {}
         self._reconnect_task: Optional[asyncio.Task] = None
+        
+        # Resilience features
+        self._backoff = ExponentialBackoff(
+            initial_delay=1.0,
+            max_delay=60.0,
+            multiplier=2.0
+        )
+        self._message_queue: List[Tuple[str, str, bool]] = []  # (topic, payload, retain)
+        self._max_queue_size = 100
+        self._last_discovery_devices: List[ClimateDevice] = []
+        self._connection_state_callbacks: List[Callable] = []
     
     async def connect(self) -> None:
         """
@@ -59,9 +70,19 @@ class MQTTBridge:
         Raises:
             ConnectionError: If connection fails
         """
-        self._logger.info(f"Connecting to MQTT broker at {self.host}:{self.port}")
+        self._logger.info(
+            f"Connecting to MQTT broker at {self.host}:{self.port}",
+            extra={"operation": "mqtt_connect", "host": self.host, "port": self.port}
+        )
+        self._logger.debug(
+            f"MQTT configuration: base_topic={self.base_topic}, username={'***' if self.username else None}",
+            extra={"operation": "mqtt_connect"}
+        )
         
         try:
+            import time
+            start_time = time.time()
+            
             # Create MQTT client
             self._client = mqtt.Client(
                 client_id="melcloud_home_bridge",
@@ -71,6 +92,10 @@ class MQTTBridge:
             # Configure authentication
             if self.username and self.password:
                 self._client.username_pw_set(self.username, self.password)
+                self._logger.debug(
+                    "MQTT authentication configured",
+                    extra={"operation": "mqtt_connect"}
+                )
             
             # Configure last will and testament (availability)
             self._client.will_set(
@@ -78,6 +103,10 @@ class MQTTBridge:
                 payload="offline",
                 qos=1,
                 retain=True
+            )
+            self._logger.debug(
+                "MQTT last will and testament configured",
+                extra={"operation": "mqtt_connect"}
             )
             
             # Set up callbacks
@@ -99,15 +128,29 @@ class MQTTBridge:
             self._client.loop_start()
             
             # Wait for connection to be established
-            for _ in range(50):  # 5 seconds max
+            for attempt in range(50):  # 5 seconds max
                 if self._connected:
                     break
                 await asyncio.sleep(0.1)
             
-            if not self._connected:
-                raise ConnectionError("Failed to establish MQTT connection within timeout")
+            duration = time.time() - start_time
             
-            self._logger.info("MQTT connection established")
+            if not self._connected:
+                error_msg = "Failed to establish MQTT connection within timeout"
+                self._logger.error(
+                    error_msg,
+                    extra={
+                        "operation": "mqtt_connect",
+                        "duration_seconds": f"{duration:.2f}",
+                        "resolution": "Check MQTT broker is running and accessible"
+                    }
+                )
+                raise ConnectionError(error_msg)
+            
+            self._logger.info(
+                "MQTT connection established",
+                extra={"operation": "mqtt_connect", "duration_seconds": f"{duration:.2f}"}
+            )
             
             # Publish bridge status as online
             await self.publish(
@@ -115,9 +158,22 @@ class MQTTBridge:
                 "online",
                 retain=True
             )
+            self._logger.debug(
+                "Published bridge online status",
+                extra={"operation": "mqtt_connect"}
+            )
             
         except Exception as e:
-            self._logger.error(f"MQTT connection failed: {e}")
+            self._logger.error(
+                f"MQTT connection failed: {e}",
+                extra={
+                    "operation": "mqtt_connect",
+                    "host": self.host,
+                    "port": self.port,
+                    "error_type": type(e).__name__,
+                    "resolution": "Verify MQTT broker address, port, and credentials"
+                }
+            )
             raise ConnectionError(f"Failed to connect to MQTT broker: {e}") from e
     
     def _on_connect(self, client, userdata, flags, rc):
@@ -139,12 +195,128 @@ class MQTTBridge:
     
     def _on_disconnect(self, client, userdata, rc):
         """Callback when disconnected from MQTT broker."""
+        was_connected = self._connected
         self._connected = False
         
         if rc != 0:
             self._logger.warning(f"Unexpected MQTT disconnection (code {rc}), will auto-reconnect")
+            # Trigger automatic reconnection
+            if was_connected and not self._reconnect_task:
+                # Schedule reconnection in the event loop
+                try:
+                    loop = asyncio.get_event_loop()
+                    self._reconnect_task = loop.create_task(self._auto_reconnect())
+                except RuntimeError:
+                    self._logger.error("Cannot schedule reconnection: no event loop running")
         else:
             self._logger.info("MQTT disconnected cleanly")
+        
+        # Notify connection state callbacks
+        for callback in self._connection_state_callbacks:
+            try:
+                callback(False)  # disconnected
+            except Exception as e:
+                self._logger.error(f"Error in connection state callback: {e}")
+    
+    async def _auto_reconnect(self) -> None:
+        """
+        Automatic reconnection with exponential backoff.
+        
+        Attempts to reconnect indefinitely with increasing delays between attempts.
+        """
+        self._logger.info("Starting automatic MQTT reconnection...")
+        attempt = 0
+        
+        while not self._connected:
+            attempt += 1
+            delay = self._backoff.get_delay()
+            
+            self._logger.info(
+                f"Attempting MQTT reconnection (attempt {attempt}) after {delay:.1f}s delay..."
+            )
+            await asyncio.sleep(delay)
+            
+            try:
+                # Attempt to connect
+                await self.connect()
+                
+                if self._connected:
+                    self._logger.info("MQTT reconnection successful")
+                    self._backoff.reset()
+                    
+                    # Republish discovery messages
+                    await self._republish_discovery()
+                    
+                    # Republish availability messages
+                    await self._republish_availability()
+                    
+                    # Flush message queue
+                    await self._flush_message_queue()
+                    
+                    break
+                    
+            except Exception as e:
+                self._logger.warning(f"MQTT reconnection attempt {attempt} failed: {e}")
+                # Continue loop to retry
+        
+        self._reconnect_task = None
+    
+    async def _republish_discovery(self) -> None:
+        """Republish MQTT Discovery messages after reconnection."""
+        if not self._last_discovery_devices:
+            return
+        
+        self._logger.info(
+            f"Republishing discovery messages for {len(self._last_discovery_devices)} devices"
+        )
+        
+        for device in self._last_discovery_devices:
+            try:
+                await self.publish_discovery(device)
+            except Exception as e:
+                self._logger.error(f"Failed to republish discovery for {device.device_name}: {e}")
+    
+    async def _republish_availability(self) -> None:
+        """Republish availability messages after reconnection."""
+        if not self._last_discovery_devices:
+            return
+        
+        self._logger.info(
+            f"Republishing availability for {len(self._last_discovery_devices)} devices"
+        )
+        
+        for device in self._last_discovery_devices:
+            try:
+                await self.publish_availability(device, available=True)
+            except Exception as e:
+                self._logger.error(f"Failed to republish availability for {device.device_name}: {e}")
+    
+    async def _flush_message_queue(self) -> None:
+        """Flush queued messages after reconnection."""
+        if not self._message_queue:
+            return
+        
+        self._logger.info(f"Flushing {len(self._message_queue)} queued MQTT messages")
+        
+        while self._message_queue:
+            topic, payload, retain = self._message_queue.pop(0)
+            try:
+                await self.publish(topic, payload, retain=retain)
+            except Exception as e:
+                self._logger.error(f"Failed to publish queued message to {topic}: {e}")
+                # Re-queue if still not connected
+                if not self._connected:
+                    self._message_queue.insert(0, (topic, payload, retain))
+                    break
+    
+    def add_connection_state_callback(self, callback: Callable) -> None:
+        """
+        Register callback for connection state changes.
+        
+        Args:
+            callback: Function(is_connected: bool) to call on state change
+        """
+        self._connection_state_callbacks.append(callback)
     
     def _on_message(self, client, userdata, msg):
         """Callback when message received from MQTT broker."""
@@ -196,6 +368,10 @@ class MQTTBridge:
         Args:
             device: ClimateDevice to publish discovery for
         """
+        # Cache device for republishing on reconnection
+        if device not in self._last_discovery_devices:
+            self._last_discovery_devices.append(device)
+        
         # Sanitize device ID for topic usage
         device_id_sanitized = sanitize_mqtt_topic(device.device_id)
         
@@ -304,25 +480,72 @@ class MQTTBridge:
         """
         Publish a message to MQTT broker.
         
+        If disconnected, queues the message for delivery after reconnection.
+        
         Args:
             topic: MQTT topic
             payload: Message payload (string or JSON)
             retain: Whether to retain the message
         """
         if not self._client or not self._connected:
-            self._logger.warning(f"Cannot publish to {topic}: not connected")
+            # Queue message for later delivery
+            if len(self._message_queue) < self._max_queue_size:
+                self._message_queue.append((topic, payload, retain))
+                self._logger.debug(
+                    f"Queued message for {topic} (queue size: {len(self._message_queue)})",
+                    extra={
+                        "operation": "mqtt_publish",
+                        "topic": topic,
+                        "queued": True,
+                        "queue_size": len(self._message_queue)
+                    }
+                )
+            else:
+                self._logger.warning(
+                    f"Message queue full ({self._max_queue_size}), dropping message for {topic}",
+                    extra={
+                        "operation": "mqtt_publish",
+                        "topic": topic,
+                        "queue_full": True,
+                        "resolution": "Check MQTT connection status and reconnection attempts"
+                    }
+                )
             return
         
         assert self._client is not None, "MQTT client should be initialized"
         
         try:
+            import time
+            start_time = time.time()
+            
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(
                 None,
                 lambda: self._client.publish(topic, payload, qos=1, retain=retain)  # type: ignore[union-attr]
             )
+            
+            duration = time.time() - start_time
+            
+            self._logger.debug(
+                f"Published to {topic}",
+                extra={
+                    "operation": "mqtt_publish",
+                    "topic": topic,
+                    "payload_length": len(payload),
+                    "retain": retain,
+                    "duration_seconds": f"{duration:.3f}"
+                }
+            )
         except Exception as e:
-            self._logger.error(f"Failed to publish to {topic}: {e}")
+            self._logger.error(
+                f"Failed to publish to {topic}: {e}",
+                extra={
+                    "operation": "mqtt_publish",
+                    "topic": topic,
+                    "error_type": type(e).__name__,
+                    "resolution": "Check MQTT broker connectivity"
+                }
+            )
     
     async def subscribe_to_commands(self, device: ClimateDevice, callback: Callable) -> None:
         """
