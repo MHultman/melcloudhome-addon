@@ -14,6 +14,7 @@ from app.models import Credentials, ClimateDevice
 from app.utils import ExponentialBackoff
 from app.mqtt_bridge import MQTTBridge
 from app.command_handler import CommandHandler
+from app.health_server import HealthServer
 
 
 class Application:
@@ -27,6 +28,7 @@ class Application:
         self.melcloud_client: Optional[MelCloudClient] = None
         self.mqtt_bridge: Optional[MQTTBridge] = None
         self.command_handler: Optional[CommandHandler] = None
+        self.health_server: Optional[HealthServer] = None
         self.devices: List[ClimateDevice] = []
         self.device_states: Dict[str, Dict] = {}  # device_id -> last known state
         self.backoff = ExponentialBackoff()
@@ -95,6 +97,13 @@ class Application:
             # Create command handler
             self.command_handler = CommandHandler(self.melcloud_client)
             logger.debug("Command handler initialized")
+            
+            # Start health server
+            self.health_server = HealthServer(port=8099)
+            await self.health_server.start()
+            # Update initial health status
+            self.health_server.update_melcloud_status(True)  # Authenticated
+            self.health_server.update_mqtt_status(self.mqtt_bridge.is_connected)
             
             # Mark as running
             self.running = True
@@ -249,6 +258,10 @@ class Application:
                     f"{poll_duration:.2f}s duration"
                 )
                 
+                # Update health server status
+                if self.health_server:
+                    self.health_server.update_poll_status(len(self.devices))
+                
                 # Reset backoff on successful poll
                 self.backoff.reset()
                 
@@ -275,6 +288,10 @@ class Application:
         logger.info("Shutting down...")
         self.running = False
         
+        # Close health server
+        if self.health_server:
+            await self.health_server.stop()
+        
         # Close MQTT connection
         if self.mqtt_bridge:
             await self.mqtt_bridge.disconnect()
@@ -282,8 +299,6 @@ class Application:
         # Close MELCloud client
         if self.melcloud_client:
             await self.melcloud_client.close()
-        
-        # TODO: Close health server (Phase 8)
         
         logger.info("Shutdown complete")
     

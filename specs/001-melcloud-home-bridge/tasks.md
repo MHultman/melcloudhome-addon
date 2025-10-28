@@ -320,12 +320,12 @@
 
 ### Implementation Tasks - Health Endpoint
 
-- [ ] T149 Create app/health_server.py with aiohttp health server
-- [ ] T150 Add /healthz endpoint handler in app/health_server.py
-- [ ] T151 Add health status JSON response per spec (MELCloud status, MQTT status, last poll time, device count) in app/health_server.py
-- [ ] T152 Add HTTP 200 for healthy, 503 for unhealthy in app/health_server.py
-- [ ] T153 Add health checks (MELCloud authenticated, MQTT connected, recent successful poll) in app/health_server.py
-- [ ] T154 Start health server on port 8099 in app/main.py
+- [x] T149 Create app/health_server.py with aiohttp health server
+- [x] T150 Add /healthz endpoint handler in app/health_server.py
+- [x] T151 Add health status JSON response per spec (MELCloud status, MQTT status, last poll time, device count) in app/health_server.py
+- [x] T152 Add HTTP 200 for healthy, 503 for unhealthy in app/health_server.py
+- [x] T153 Add health checks (MELCloud authenticated, MQTT connected, recent successful poll) in app/health_server.py
+- [x] T154 Start health server on port 8099 in app/main.py
 
 ### Implementation Tasks - Diagnostic Logging
 
