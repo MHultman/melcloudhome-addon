@@ -178,29 +178,29 @@
 
 ### Implementation Tasks - MQTT Bridge
 
-- [ ] T076 Create app/mqtt_bridge.py with MQTTBridge class using paho-mqtt
-- [ ] T077 Add async connect() method with connection error handling in app/mqtt_bridge.py
-- [ ] T078 Add async disconnect() method for graceful shutdown in app/mqtt_bridge.py
-- [ ] T079 Add connection state tracking and auto-reconnect logic in app/mqtt_bridge.py
-- [ ] T080 Add MQTT last will and testament configuration in app/mqtt_bridge.py
+- [x] T076 Create app/mqtt_bridge.py with MQTTBridge class using paho-mqtt
+- [x] T077 Add async connect() method with connection error handling in app/mqtt_bridge.py
+- [x] T078 Add async disconnect() method for graceful shutdown in app/mqtt_bridge.py
+- [x] T079 Add connection state tracking and auto-reconnect logic in app/mqtt_bridge.py
+- [x] T080 Add MQTT last will and testament configuration in app/mqtt_bridge.py
 
 ### Implementation Tasks - MQTT Discovery
 
-- [ ] T081 Add publish_discovery() method for climate entities in app/mqtt_bridge.py
-- [ ] T082 Add MQTT Discovery message formatting per contracts/mqtt-discovery-schema.json in app/mqtt_bridge.py
-- [ ] T083 Add device metadata formatting (manufacturer, model, identifiers) in app/mqtt_bridge.py
-- [ ] T084 Add climate entity configuration (modes, temperature ranges, topics) in app/mqtt_bridge.py
-- [ ] T085 Add topic sanitization (remove special characters) in app/mqtt_bridge.py
-- [ ] T086 Add base_topic configuration support in app/mqtt_bridge.py
+- [x] T081 Add publish_discovery() method for climate entities in app/mqtt_bridge.py
+- [x] T082 Add MQTT Discovery message formatting per contracts/mqtt-discovery-schema.json in app/mqtt_bridge.py
+- [x] T083 Add device metadata formatting (manufacturer, model, identifiers) in app/mqtt_bridge.py
+- [x] T084 Add climate entity configuration (modes, temperature ranges, topics) in app/mqtt_bridge.py
+- [x] T085 Add topic sanitization (remove special characters) in app/mqtt_bridge.py
+- [x] T086 Add base_topic configuration support in app/mqtt_bridge.py
 
 ### Implementation Tasks - State Publishing
 
-- [ ] T087 Add publish_state() method for device state updates in app/mqtt_bridge.py
-- [ ] T088 Add state payload formatting per contracts/mqtt-state-schema.json in app/mqtt_bridge.py
-- [ ] T089 Add ClimateDevice.to_mqtt_state() implementation in app/models/climate_device.py
-- [ ] T090 Add availability topic publishing (online/offline) in app/mqtt_bridge.py
-- [ ] T091 Integrate MQTT publishing into polling loop in app/main.py
-- [ ] T092 Add state publishing only on changes (not every poll) in app/main.py
+- [x] T087 Add publish_state() method for device state updates in app/mqtt_bridge.py
+- [x] T088 Add state payload formatting per contracts/mqtt-state-schema.json in app/mqtt_bridge.py
+- [x] T089 Add ClimateDevice.to_mqtt_state() implementation in app/models/climate_device.py
+- [x] T090 Add availability topic publishing (online/offline) in app/mqtt_bridge.py
+- [x] T091 Integrate MQTT publishing into polling loop in app/main.py
+- [x] T092 Add state publishing only on changes (not every poll) in app/main.py
 
 ### Acceptance Tests for Milestone 5 (US2, US3)
 

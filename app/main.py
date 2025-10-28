@@ -13,6 +13,7 @@ from app.logging_conf import setup_logging
 from app.melcloud_client import MelCloudClient, LoginError, ApiError
 from app.models import Credentials, ClimateDevice
 from app.utils import ExponentialBackoff
+from app.mqtt_bridge import MQTTBridge
 
 
 class Application:
@@ -24,6 +25,7 @@ class Application:
         self.running = False
         self._shutdown_event = asyncio.Event()
         self.melcloud_client: Optional[MelCloudClient] = None
+        self.mqtt_bridge: Optional[MQTTBridge] = None
         self.devices: List[ClimateDevice] = []
         self.device_states: Dict[str, Dict] = {}  # device_id -> last known state
         self.backoff = ExponentialBackoff()
@@ -69,6 +71,24 @@ class Application:
             except LoginError as e:
                 logger.error(f"Failed to authenticate with MELCloud: {e}")
                 logger.error("Please verify your MELCloud credentials in the add-on configuration")
+                return 1
+            
+            # Initialize MQTT bridge
+            logger.info("Initializing MQTT bridge...")
+            self.mqtt_bridge = MQTTBridge(
+                host=self.config.mqtt_host,
+                port=self.config.mqtt_port,
+                username=self.config.mqtt_username,
+                password=self.config.mqtt_password,
+                base_topic=self.config.mqtt_base_topic
+            )
+            
+            # Connect to MQTT broker
+            try:
+                await self.mqtt_bridge.connect()
+            except ConnectionError as e:
+                logger.error(f"Failed to connect to MQTT broker: {e}")
+                logger.error("Please verify your MQTT broker configuration")
                 return 1
             
             # Mark as running
@@ -125,6 +145,7 @@ class Application:
         """
         assert self.melcloud_client is not None, "MELCloud client not initialized"
         assert self.config is not None, "Configuration not loaded"
+        assert self.mqtt_bridge is not None, "MQTT bridge not initialized"
         
         logger.info("Starting polling loop...")
         poll_count = 0
@@ -147,6 +168,12 @@ class Application:
                             f"[ID: {device.device_id}] "
                             f"[Online: {device.online}]"
                         )
+                    
+                    # Publish MQTT Discovery for all devices
+                    logger.info("Publishing MQTT discovery messages...")
+                    for device in self.devices:
+                        await self.mqtt_bridge.publish_discovery(device)
+                        await self.mqtt_bridge.publish_availability(device, device.online)
                     
                     discovered = True
                     
@@ -177,8 +204,10 @@ class Application:
                                 # Update device object
                                 device.state = new_state
                                 device.online = True
+                                
+                                # Publish state change to MQTT
+                                await self.mqtt_bridge.publish_state(device)
                             
-                            # TODO: Publish state to MQTT (Phase 5)
                         else:
                             # Device unreachable
                             if device.online:
@@ -186,7 +215,8 @@ class Application:
                                     f"Device {device.device_name} is now offline"
                                 )
                                 device.online = False
-                                # TODO: Publish unavailable to MQTT (Phase 5)
+                                # Publish unavailable status to MQTT
+                                await self.mqtt_bridge.publish_availability(device, False)
                     
                     except Exception as e:
                         logger.error(
@@ -229,11 +259,14 @@ class Application:
         logger.info("Shutting down...")
         self.running = False
         
+        # Close MQTT connection
+        if self.mqtt_bridge:
+            await self.mqtt_bridge.disconnect()
+        
         # Close MELCloud client
         if self.melcloud_client:
             await self.melcloud_client.close()
         
-        # TODO: Close MQTT connection (Phase 5)
         # TODO: Close health server (Phase 8)
         
         logger.info("Shutdown complete")
