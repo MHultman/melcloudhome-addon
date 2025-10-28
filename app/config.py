@@ -101,7 +101,7 @@ def load_configuration() -> Configuration:
         pydantic.ValidationError: If configuration validation fails
     """
     try:
-        config = Configuration()
+        config = Configuration()  # type: ignore[call-arg]
         return config
     except Exception as e:
         # Re-raise with clear error message
