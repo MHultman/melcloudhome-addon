@@ -154,10 +154,10 @@
 
 ### Acceptance Tests for Milestone 4 (US1, US2)
 
-- [ ] T066 [P] Unit test: Credentials validation accepts valid email in tests/unit/test_credentials.py
-- [ ] T067 [P] Unit test: ClimateDevice parses ATA device state correctly in tests/unit/test_climate_device.py
-- [ ] T068 [P] Unit test: ClimateDevice parses ATW device state with settings array in tests/unit/test_climate_device.py
-- [ ] T069 [P] Unit test: ATW zone 2 detection works correctly in tests/unit/test_climate_device.py
+- [x] T066 [P] Unit test: Credentials validation accepts valid email in tests/unit/test_credentials.py
+- [x] T067 [P] Unit test: ClimateDevice parses ATA device state correctly in tests/unit/test_climate_device.py
+- [x] T068 [P] Unit test: ClimateDevice parses ATW device state with settings array in tests/unit/test_climate_device.py
+- [x] T069 [P] Unit test: ATW zone 2 detection works correctly in tests/unit/test_climate_device.py
 - [ ] T070 Test: Integration test - MelCloudClient authenticates with mock credentials in tests/integration/test_melcloud_auth.py
 - [ ] T071 Test: Integration test - MelCloudClient lists devices from mock API in tests/integration/test_device_discovery.py
 - [ ] T072 Test: Integration test - MelCloudClient handles 401 with re-auth in tests/integration/test_session_recovery.py
