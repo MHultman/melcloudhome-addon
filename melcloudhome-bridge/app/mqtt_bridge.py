@@ -415,6 +415,7 @@ class MQTTBridge:
             "mode_state_template": "{{ value_json.mode }}",
             "mode_command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_mode",
             "availability_topic": f"{self.base_topic}/climate/{device_id_sanitized}/availability",
+            "json_attributes_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
             "temperature_unit": "C",
             "min_temp": 16.0,
             "max_temp": 31.0,
@@ -429,6 +430,171 @@ class MQTTBridge:
         )
         
         self._logger.info(f"Published MQTT discovery for {device.device_name}")
+        
+        # Publish additional sensors for ATW devices
+        if device.device_type == "atwunit":
+            await self._publish_atw_sensors(device)
+    
+    async def _publish_atw_sensors(self, device: ClimateDevice) -> None:
+        """
+        Publish additional sensor discoveries for ATW devices.
+        
+        ATW devices have extra data points that should be exposed as separate sensors:
+        - Tank water temperature (current)
+        - Tank water temperature (target)
+        - Zone operation modes
+        - Error states
+        - Additional status flags
+        
+        Args:
+            device: ATW ClimateDevice
+        """
+        device_id_sanitized = sanitize_mqtt_topic(device.device_id)
+        state_topic = f"{self.base_topic}/climate/{device_id_sanitized}/state"
+        availability_topic = f"{self.base_topic}/climate/{device_id_sanitized}/availability"
+        
+        # Device info (shared across all sensors)
+        device_info = {
+            "identifiers": [f"melcloud_{device_id_sanitized}"],
+            "name": device.device_name,
+            "manufacturer": "Mitsubishi Electric",
+            "model": device.device_type.upper(),
+            "sw_version": "1.0.0"
+        }
+        
+        # Tank Water Temperature (Current)
+        await self.publish(
+            f"{self.base_topic}/sensor/{device_id_sanitized}_tank_temp/config",
+            json.dumps({
+                "name": f"{device.device_name} Tank Temperature",
+                "unique_id": f"melcloud_{device_id_sanitized}_tank_temp",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ value_json.tank_temperature }}",
+                "availability_topic": availability_topic,
+                "unit_of_measurement": "°C",
+                "device_class": "temperature",
+                "state_class": "measurement",
+            }),
+            retain=True
+        )
+        
+        # Tank Water Temperature (Target/Setpoint)
+        await self.publish(
+            f"{self.base_topic}/sensor/{device_id_sanitized}_tank_target/config",
+            json.dumps({
+                "name": f"{device.device_name} Tank Target Temperature",
+                "unique_id": f"melcloud_{device_id_sanitized}_tank_target",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ value_json.tank_target_temperature }}",
+                "availability_topic": availability_topic,
+                "unit_of_measurement": "°C",
+                "device_class": "temperature",
+                "state_class": "measurement",
+            }),
+            retain=True
+        )
+        
+        # Zone 1 Operation Mode
+        await self.publish(
+            f"{self.base_topic}/sensor/{device_id_sanitized}_zone1_mode/config",
+            json.dumps({
+                "name": f"{device.device_name} Zone 1 Operation Mode",
+                "unique_id": f"melcloud_{device_id_sanitized}_zone1_mode",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ value_json.operation_mode_zone1 }}",
+                "availability_topic": availability_topic,
+                "icon": "mdi:home-thermometer",
+            }),
+            retain=True
+        )
+        
+        # Forced Hot Water Mode (Binary Sensor)
+        await self.publish(
+            f"{self.base_topic}/binary_sensor/{device_id_sanitized}_forced_hw/config",
+            json.dumps({
+                "name": f"{device.device_name} Forced Hot Water",
+                "unique_id": f"melcloud_{device_id_sanitized}_forced_hw",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ 'ON' if value_json.forced_hot_water else 'OFF' }}",
+                "availability_topic": availability_topic,
+                "payload_on": "ON",
+                "payload_off": "OFF",
+                "icon": "mdi:water-boiler",
+            }),
+            retain=True
+        )
+        
+        # Prohibit Hot Water (Binary Sensor)
+        await self.publish(
+            f"{self.base_topic}/binary_sensor/{device_id_sanitized}_prohibit_hw/config",
+            json.dumps({
+                "name": f"{device.device_name} Prohibit Hot Water",
+                "unique_id": f"melcloud_{device_id_sanitized}_prohibit_hw",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ 'ON' if value_json.prohibit_hot_water else 'OFF' }}",
+                "availability_topic": availability_topic,
+                "payload_on": "ON",
+                "payload_off": "OFF",
+                "icon": "mdi:water-off",
+            }),
+            retain=True
+        )
+        
+        # In Standby Mode (Binary Sensor)
+        await self.publish(
+            f"{self.base_topic}/binary_sensor/{device_id_sanitized}_standby/config",
+            json.dumps({
+                "name": f"{device.device_name} Standby Mode",
+                "unique_id": f"melcloud_{device_id_sanitized}_standby",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ 'ON' if value_json.in_standby else 'OFF' }}",
+                "availability_topic": availability_topic,
+                "payload_on": "ON",
+                "payload_off": "OFF",
+                "icon": "mdi:sleep",
+            }),
+            retain=True
+        )
+        
+        # Error State (Binary Sensor)
+        await self.publish(
+            f"{self.base_topic}/binary_sensor/{device_id_sanitized}_error/config",
+            json.dumps({
+                "name": f"{device.device_name} Error",
+                "unique_id": f"melcloud_{device_id_sanitized}_error",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ 'ON' if value_json.error else 'OFF' }}",
+                "availability_topic": availability_topic,
+                "payload_on": "ON",
+                "payload_off": "OFF",
+                "device_class": "problem",
+            }),
+            retain=True
+        )
+        
+        # Error Code (Sensor - only if error exists)
+        await self.publish(
+            f"{self.base_topic}/sensor/{device_id_sanitized}_error_code/config",
+            json.dumps({
+                "name": f"{device.device_name} Error Code",
+                "unique_id": f"melcloud_{device_id_sanitized}_error_code",
+                "device": device_info,
+                "state_topic": state_topic,
+                "value_template": "{{ value_json.error_code if value_json.error else 'None' }}",
+                "availability_topic": availability_topic,
+                "icon": "mdi:alert-circle",
+            }),
+            retain=True
+        )
+        
+        self._logger.info(f"Published ATW sensor discoveries for {device.device_name}")
     
     def _get_modes_for_device(self, device: ClimateDevice) -> list:
         """

@@ -191,10 +191,11 @@ class ClimateDevice(BaseModel):
                 })
         
         # Error state (all device types)
+        base_state["error"] = self.is_in_error()
         if self.is_in_error():
-            base_state["error"] = True
             error_code = self.get_error_code()
-            if error_code:
-                base_state["error_code"] = error_code
+            base_state["error_code"] = error_code if error_code else ""
+        else:
+            base_state["error_code"] = ""
         
         return base_state
