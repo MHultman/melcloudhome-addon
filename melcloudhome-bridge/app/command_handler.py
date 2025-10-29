@@ -145,6 +145,170 @@ class CommandHandler:
             )
             return False
     
+    async def handle_tank_temperature_command(
+        self,
+        device: ClimateDevice,
+        temperature: float
+    ) -> bool:
+        """
+        Handle tank water temperature setpoint command (ATW only).
+        
+        Args:
+            device: Target device
+            temperature: Desired tank temperature (Celsius)
+            
+        Returns:
+            True if command succeeded, False otherwise
+        """
+        # Validate this is an ATW device
+        if device.device_type != "atwunit":
+            self._logger.warning(
+                f"Tank temperature control not supported for {device.device_type} device {device.device_name}"
+            )
+            return False
+        
+        # Validate temperature range (typically 40-60°C for hot water tanks)
+        if not (40.0 <= temperature <= 60.0):
+            self._logger.warning(
+                f"Invalid tank temperature {temperature}°C for {device.device_name} "
+                f"(must be 40-60°C)"
+            )
+            return False
+        
+        self._logger.info(
+            f"Setting tank temperature to {temperature}°C on {device.device_name}"
+        )
+        
+        try:
+            # Build state change payload
+            state_changes = {
+                "SetTankWaterTemperature": str(int(temperature))
+            }
+            
+            # Execute command
+            await self.melcloud_client.set_device_state(
+                device.device_id,
+                state_changes
+            )
+            
+            # Immediate state refresh
+            await self._refresh_device_state(device)
+            
+            self._logger.info(
+                f"Successfully set tank temperature to {temperature}°C on {device.device_name}"
+            )
+            return True
+            
+        except ApiError as e:
+            self._logger.error(
+                f"Failed to set tank temperature on {device.device_name}: {e}"
+            )
+            return False
+    
+    async def handle_forced_hot_water_command(
+        self,
+        device: ClimateDevice,
+        enabled: bool
+    ) -> bool:
+        """
+        Handle forced hot water mode command (ATW only).
+        
+        Args:
+            device: Target device
+            enabled: True to enable forced hot water mode, False to disable
+            
+        Returns:
+            True if command succeeded, False otherwise
+        """
+        # Validate this is an ATW device
+        if device.device_type != "atwunit":
+            self._logger.warning(
+                f"Forced hot water mode not supported for {device.device_type} device {device.device_name}"
+            )
+            return False
+        
+        self._logger.info(
+            f"Setting forced hot water mode to {'ON' if enabled else 'OFF'} on {device.device_name}"
+        )
+        
+        try:
+            # Build state change payload
+            state_changes = {
+                "ForcedHotWaterMode": "True" if enabled else "False"
+            }
+            
+            # Execute command
+            await self.melcloud_client.set_device_state(
+                device.device_id,
+                state_changes
+            )
+            
+            # Immediate state refresh
+            await self._refresh_device_state(device)
+            
+            self._logger.info(
+                f"Successfully set forced hot water mode to {'ON' if enabled else 'OFF'} on {device.device_name}"
+            )
+            return True
+            
+        except ApiError as e:
+            self._logger.error(
+                f"Failed to set forced hot water mode on {device.device_name}: {e}"
+            )
+            return False
+    
+    async def handle_prohibit_hot_water_command(
+        self,
+        device: ClimateDevice,
+        enabled: bool
+    ) -> bool:
+        """
+        Handle prohibit hot water command (ATW only).
+        
+        Args:
+            device: Target device
+            enabled: True to prohibit hot water, False to allow
+            
+        Returns:
+            True if command succeeded, False otherwise
+        """
+        # Validate this is an ATW device
+        if device.device_type != "atwunit":
+            self._logger.warning(
+                f"Prohibit hot water not supported for {device.device_type} device {device.device_name}"
+            )
+            return False
+        
+        self._logger.info(
+            f"Setting prohibit hot water to {'ON' if enabled else 'OFF'} on {device.device_name}"
+        )
+        
+        try:
+            # Build state change payload
+            state_changes = {
+                "ProhibitHotWater": "True" if enabled else "False"
+            }
+            
+            # Execute command
+            await self.melcloud_client.set_device_state(
+                device.device_id,
+                state_changes
+            )
+            
+            # Immediate state refresh
+            await self._refresh_device_state(device)
+            
+            self._logger.info(
+                f"Successfully set prohibit hot water to {'ON' if enabled else 'OFF'} on {device.device_name}"
+            )
+            return True
+            
+        except ApiError as e:
+            self._logger.error(
+                f"Failed to set prohibit hot water on {device.device_name}: {e}"
+            )
+            return False
+    
     def _validate_temperature(self, temperature: float) -> bool:
         """
         Validate temperature is within acceptable range.
@@ -237,4 +401,33 @@ class CommandHandler:
             pass
         
         self._logger.warning(f"Failed to parse mode command: {payload}")
+        return None
+    
+    def parse_switch_command(self, payload: str) -> Optional[bool]:
+        """
+        Parse switch command payload (ON/OFF).
+        
+        Home Assistant sends switch commands as "ON" or "OFF" strings.
+        
+        Args:
+            payload: MQTT payload string
+            
+        Returns:
+            True for ON, False for OFF, None if invalid
+        """
+        try:
+            payload_upper = payload.strip().upper()
+            if payload_upper == "ON":
+                return True
+            elif payload_upper == "OFF":
+                return False
+            
+            # Try parsing as JSON boolean
+            data = json.loads(payload)
+            if isinstance(data, bool):
+                return data
+        except (json.JSONDecodeError, AttributeError):
+            pass
+        
+        self._logger.warning(f"Failed to parse switch command: {payload}")
         return None

@@ -188,6 +188,72 @@ class ClimateDevice(BaseModel):
             return self._get_atw_setting("HasZone2") == "1"
         return False
     
+    def has_cooling_mode(self) -> bool:
+        """Check if ATW device supports cooling mode."""
+        if self.device_type == "atwunit":
+            return self._get_atw_bool("HasCoolingMode")
+        return False
+    
+    def get_in_standby_mode(self) -> bool:
+        """Check if ATW device is in standby mode."""
+        if self.device_type == "atwunit":
+            return self._get_atw_bool("InStandbyMode")
+        return False
+    
+    def get_operation_mode(self) -> Optional[str]:
+        """Get overall operation mode (ATW only)."""
+        if self.device_type == "atwunit":
+            return self._get_atw_setting("OperationMode")
+        return None
+    
+    def get_operation_mode_zone1(self) -> Optional[str]:
+        """Get Zone 1 operation mode (ATW only)."""
+        if self.device_type == "atwunit":
+            return self._get_atw_setting("OperationModeZone1")
+        return None
+    
+    def get_operation_mode_zone2(self) -> Optional[str]:
+        """Get Zone 2 operation mode (ATW only)."""
+        if self.device_type == "atwunit" and self.has_zone_2():
+            return self._get_atw_setting("OperationModeZone2")
+        return None
+    
+    def get_room_temperature_zone1(self) -> Optional[float]:
+        """Get Zone 1 room temperature (ATW only)."""
+        if self.device_type == "atwunit":
+            return self._get_atw_float("RoomTemperatureZone1")
+        return None
+    
+    def get_room_temperature_zone2(self) -> Optional[float]:
+        """Get Zone 2 room temperature (ATW only)."""
+        if self.device_type == "atwunit" and self.has_zone_2():
+            return self._get_atw_float("RoomTemperatureZone2")
+        return None
+    
+    def get_set_temperature_zone1(self) -> Optional[float]:
+        """Get Zone 1 set temperature (ATW only)."""
+        if self.device_type == "atwunit":
+            return self._get_atw_float("SetTemperatureZone1")
+        return None
+    
+    def get_set_temperature_zone2(self) -> Optional[float]:
+        """Get Zone 2 set temperature (ATW only)."""
+        if self.device_type == "atwunit" and self.has_zone_2():
+            return self._get_atw_float("SetTemperatureZone2")
+        return None
+    
+    def get_prohibit_hot_water(self) -> bool:
+        """Check if hot water is prohibited (ATW only)."""
+        if self.device_type == "atwunit":
+            return self._get_atw_bool("ProhibitHotWater")
+        return False
+    
+    def get_forced_hot_water_mode(self) -> bool:
+        """Check if forced hot water mode is active (ATW only)."""
+        if self.device_type == "atwunit":
+            return self._get_atw_bool("ForcedHotWaterMode")
+        return False
+    
     def to_mqtt_state(self) -> dict:
         """
         Convert to MQTT state topic payload for Home Assistant.
@@ -235,15 +301,18 @@ class ClimateDevice(BaseModel):
         elif self.device_type == "atwunit":
             # ATW: Hydronic heating with zones + hot water tank
             atw_values = {
-                "mode": self._get_atw_setting("OperationMode") or "unknown",
-                "current_temperature": self.get_temperature(),  # Zone 1 room temp
-                "temperature": self.get_target_temperature(),  # Zone 1 target
+                "mode": self.get_operation_mode() or "unknown",
+                "current_temperature": self.get_room_temperature_zone1(),  # Zone 1 room temp
+                "temperature": self.get_set_temperature_zone1(),  # Zone 1 target
                 "tank_temperature": self.get_tank_temperature(),
                 "tank_target_temperature": self.get_tank_target_temperature(),
-                "operation_mode_zone1": self._get_atw_setting("OperationModeZone1"),
-                "forced_hot_water": self._get_atw_bool("ForcedHotWaterMode"),
-                "prohibit_hot_water": self._get_atw_bool("ProhibitHotWater"),
-                "in_standby": self._get_atw_bool("InStandbyMode"),
+                "operation_mode": self.get_operation_mode(),
+                "operation_mode_zone1": self.get_operation_mode_zone1(),
+                "forced_hot_water": self.get_forced_hot_water_mode(),
+                "prohibit_hot_water": self.get_prohibit_hot_water(),
+                "in_standby": self.get_in_standby_mode(),
+                "has_zone2": self.has_zone_2(),
+                "has_cooling_mode": self.has_cooling_mode(),
             }
             
             # DEBUG: Log each ATW value being set
@@ -258,9 +327,9 @@ class ClimateDevice(BaseModel):
             # Zone 2 if present
             if self.has_zone_2():
                 base_state.update({
-                    "zone2_temperature": self._get_atw_float("RoomTemperatureZone2"),
-                    "zone2_target_temperature": self._get_atw_float("SetTemperatureZone2"),
-                    "operation_mode_zone2": self._get_atw_setting("OperationModeZone2"),
+                    "zone2_temperature": self.get_room_temperature_zone2(),
+                    "zone2_target_temperature": self.get_set_temperature_zone2(),
+                    "operation_mode_zone2": self.get_operation_mode_zone2(),
                 })
         
         # Error state (all device types)

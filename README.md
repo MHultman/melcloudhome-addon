@@ -144,6 +144,18 @@ Once installed and configured, your MELCloud devices will automatically appear i
 - **Automation**: Use devices in automations and scripts
 - **Dashboards**: Add climate cards to your Lovelace dashboards
 
+### ATW Heat Pump Support
+
+For **ATW (Air-to-Water)** heat pumps, additional entities are automatically created:
+
+- 🌡️ **Hot Water Control**: Tank temperature sensor and setpoint control
+- 🔥 **Forced Hot Water**: Switch to boost hot water heating
+- 🚫 **Prohibit Hot Water**: Switch to disable hot water heating
+- 📊 **Zone Sensors**: Temperature and operation mode for Zone 1 (and Zone 2 if available)
+- ⚠️ **Status Sensors**: Error states, standby mode, device capabilities
+
+See [Home Assistant Entity Reference](docs/home-assistant-entities.md) for complete list and examples.
+
 ### Example Automation
 
 ```yaml
@@ -159,6 +171,24 @@ automation:
         data:
           temperature: 22
           hvac_mode: heat
+```
+
+### ATW Hot Water Boost Example
+
+```yaml
+automation:
+  - alias: "Morning Hot Water Boost"
+    trigger:
+      - platform: time
+        at: "06:00:00"
+    action:
+      - service: switch.turn_on
+        target:
+          entity_id: switch.heat_pump_forced_hot_water
+      - delay: "01:00:00"
+      - service: switch.turn_off
+        target:
+          entity_id: switch.heat_pump_forced_hot_water
 ```
 
 ## Health Monitoring

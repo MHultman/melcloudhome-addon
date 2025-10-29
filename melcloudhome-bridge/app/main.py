@@ -458,7 +458,7 @@ class Application:
         payload: str
     ) -> None:
         """
-        Handle command from MQTT (temperature or mode).
+        Handle command from MQTT (temperature, mode, tank temperature, switches).
         
         Args:
             device: Target device
@@ -467,6 +467,8 @@ class Application:
         """
         assert self.command_handler is not None, "Command handler not initialized"
         assert self.mqtt_bridge is not None, "MQTT bridge not initialized"
+        
+        success = False
         
         # Route based on topic
         if "set_temperature" in topic:
@@ -482,12 +484,6 @@ class Application:
             success = await self.command_handler.handle_temperature_command(
                 device, temperature
             )
-            
-            if success:
-                # Update stored state
-                self.device_states[device.device_id] = device.state.copy()
-                # Publish updated state to MQTT
-                await self.mqtt_bridge.publish_state(device)
         
         elif "set_mode" in topic:
             # Parse mode from payload
@@ -500,15 +496,59 @@ class Application:
             
             # Execute command
             success = await self.command_handler.handle_mode_command(device, mode)
+        
+        elif "set_tank_temperature" in topic:
+            # Parse tank temperature from payload
+            temperature = self.command_handler.parse_temperature_command(payload)
+            if temperature is None:
+                logger.warning(
+                    f"Failed to parse tank temperature command for {device.device_name}: {payload}"
+                )
+                return
             
-            if success:
-                # Update stored state
-                self.device_states[device.device_id] = device.state.copy()
-                # Publish updated state to MQTT
-                await self.mqtt_bridge.publish_state(device)
+            # Execute command
+            success = await self.command_handler.handle_tank_temperature_command(
+                device, temperature
+            )
+        
+        elif "set_forced_hot_water" in topic:
+            # Parse switch command (ON/OFF)
+            enabled = self.command_handler.parse_switch_command(payload)
+            if enabled is None:
+                logger.warning(
+                    f"Failed to parse forced hot water command for {device.device_name}: {payload}"
+                )
+                return
+            
+            # Execute command
+            success = await self.command_handler.handle_forced_hot_water_command(
+                device, enabled
+            )
+        
+        elif "set_prohibit_hot_water" in topic:
+            # Parse switch command (ON/OFF)
+            enabled = self.command_handler.parse_switch_command(payload)
+            if enabled is None:
+                logger.warning(
+                    f"Failed to parse prohibit hot water command for {device.device_name}: {payload}"
+                )
+                return
+            
+            # Execute command
+            success = await self.command_handler.handle_prohibit_hot_water_command(
+                device, enabled
+            )
         
         else:
             logger.warning(f"Unknown command topic: {topic}")
+            return
+        
+        # If command was successful, update stored state and publish to MQTT
+        if success:
+            # Update stored state
+            self.device_states[device.device_id] = device.state.copy()
+            # Publish updated state to MQTT
+            await self.mqtt_bridge.publish_state(device)
 
 
 async def main() -> int:

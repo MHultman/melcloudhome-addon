@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.5] - 2025-10-29
 
 ### Fixed
+
 - Fixed KeyError in ATW device state logging that caused polling loop crashes
 - Fixed `_get_atw_setting` method to support both flat dict and settings array formats
 - Added fallback "unknown" mode to ensure mode is always present in MQTT state
