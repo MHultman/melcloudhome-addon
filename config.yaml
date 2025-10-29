@@ -1,5 +1,5 @@
 name: MELCloud Home Bridge
-version: "1.2.6"
+version: "1.2.7"
 slug: melcloudhome-bridge
 description: Bridge Mitsubishi MELCloud climate devices to Home Assistant via MQTT Discovery with full ATW control support
 url: "https://github.com/MHultman/melcloudhome-addon"
