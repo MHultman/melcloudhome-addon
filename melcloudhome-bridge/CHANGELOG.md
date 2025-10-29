@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2025-10-29
+
+### Added
+
+- **Complete ATW Data Integration** - All pymelcloudhome data fields now mapped to Home Assistant
+  - Tank water temperature control (number entity, 40-60°C range)
+  - Forced hot water mode switch (boost hot water heating)
+  - Prohibit hot water switch (disable hot water heating)
+  - Zone 1 & Zone 2 operation mode sensors
+  - Overall operation mode sensor
+  - Standby mode binary sensor
+  - Has Zone 2 capability sensor (diagnostic)
+  - Has cooling mode capability sensor (diagnostic)
+  - Zone 2 temperature and setpoint sensors (when Zone 2 present)
+
+### Enhanced
+
+- **ClimateDevice Model** - Added 12 new getter methods for all ATW data fields
+  - `get_operation_mode()`, `get_operation_mode_zone1()`, `get_operation_mode_zone2()`
+  - `get_room_temperature_zone1()`, `get_room_temperature_zone2()`
+  - `get_set_temperature_zone1()`, `get_set_temperature_zone2()`
+  - `get_forced_hot_water_mode()`, `get_prohibit_hot_water()`
+  - `get_in_standby_mode()`, `has_cooling_mode()`
+- **Command Handler** - Added control for ATW-specific features
+
+  - `handle_tank_temperature_command()` - Set hot water tank temperature
+  - `handle_forced_hot_water_command()` - Toggle forced hot water mode
+  - `handle_prohibit_hot_water_command()` - Toggle hot water prohibition
+  - `parse_switch_command()` - Parse ON/OFF switch commands
+
+- **MQTT Bridge** - Extended ATW sensor discovery
+  - All 13 data fields from pymelcloudhome API now exposed as entities
+  - Automatic Zone 2 sensor creation when available
+  - Proper command topic subscriptions for new controls
+
+### Documentation
+
+- Added comprehensive implementation summary (IMPLEMENTATION_SUMMARY.md)
+- Created Home Assistant entity reference guide (docs/home-assistant-entities.md)
+- Updated README with ATW support examples and automation recipes
+- Added example automations for hot water boost and tank temperature control
+
+### Technical
+
+- All existing tests pass (77/77 unit tests)
+- No breaking changes to existing functionality
+- Backward compatible with existing installations
+
 ## [1.3.5] - 2025-10-29
 
 ### Fixed
