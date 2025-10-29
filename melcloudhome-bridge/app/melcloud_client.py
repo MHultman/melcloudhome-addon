@@ -334,18 +334,12 @@ class MelCloudClient:
                 "Call list_devices() first to populate device cache."
             )
         
+        import json
         self._logger.info(
-            f"Updating device {device_id} state: {state_changes}",
-            extra={
-                "operation": "set_device_state",
-                "device_id": device_id,
-                "device_type": device_type,
-                "state_changes": state_changes
-            }
+            f"Updating device {device_id} state: {json.dumps(state_changes)}"
         )
         self._logger.debug(
-            f"State changes detail: {state_changes}",
-            extra={"operation": "set_device_state", "device_id": device_id}
+            f"State changes detail: {json.dumps(state_changes)}"
         )
         
         try:
@@ -353,7 +347,24 @@ class MelCloudClient:
             start_time = time.time()
             
             # Update device state via client (requires device_id, device_type, state_data)
-            await self._client.set_device_state(device_id, device_type, state_changes)
+            # Add timeout to prevent hanging indefinitely
+            try:
+                await asyncio.wait_for(
+                    self._client.set_device_state(device_id, device_type, state_changes),
+                    timeout=self.API_TIMEOUT_SECONDS
+                )
+            except asyncio.TimeoutError:
+                error_msg = f"Device state update timed out after {self.API_TIMEOUT_SECONDS}s"
+                self._logger.error(
+                    error_msg,
+                    extra={
+                        "operation": "set_device_state",
+                        "device_id": device_id,
+                        "device_type": device_type,
+                        "state_changes": state_changes
+                    }
+                )
+                raise ApiError(error_msg)
             
             duration = time.time() - start_time
             
@@ -377,18 +388,8 @@ class MelCloudClient:
                 # Retry once after re-auth
                 return await self.set_device_state(device_id, state_changes)
             
-            error_msg = f"Failed to update device state: {str(e)}"
-            self._logger.error(
-                error_msg,
-                extra={
-                    "operation": "set_device_state",
-                    "device_id": device_id,
-                    "device_type": device_type,
-                    "state_changes": state_changes,
-                    "error_type": type(e).__name__,
-                    "resolution": "Check device availability and network connectivity"
-                }
-            )
+            error_msg = f"Failed to update device state for {device_id}: {type(e).__name__} - {str(e)}"
+            self._logger.error(error_msg)
             raise ApiError(error_msg) from e
     
     async def _handle_401_error(self) -> None:

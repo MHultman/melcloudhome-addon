@@ -81,9 +81,19 @@ class CommandHandler:
                 }
             
             # Execute command
+            import json
+            self._logger.debug(
+                f"Sending state changes to MELCloud: {json.dumps(state_changes)}"
+            )
+            
             await self.melcloud_client.set_device_state(
                 device.device_id,
                 state_changes
+            )
+            
+            self._logger.debug(
+                "State change completed, refreshing device state",
+                extra={"device_id": device.device_id}
             )
             
             # Immediate state refresh
@@ -96,7 +106,21 @@ class CommandHandler:
             
         except ApiError as e:
             self._logger.error(
-                f"Failed to set temperature on {device.device_name}: {e}"
+                f"Failed to set temperature on {device.device_name}: {e}",
+                extra={"device_id": device.device_id, "error": str(e)}
+            )
+            return False
+        except KeyError as e:
+            # Loguru format string issue with dict keys
+            self._logger.error(
+                f"KeyError setting temperature on {device.device_name}: {repr(e)}",
+                extra={"device_id": device.device_id, "key_error": repr(e)}
+            )
+            return False
+        except Exception as e:
+            self._logger.error(
+                f"Unexpected error setting temperature on {device.device_name}: {type(e).__name__} - {repr(e)}",
+                extra={"device_id": device.device_id, "error_type": type(e).__name__}
             )
             return False
     
