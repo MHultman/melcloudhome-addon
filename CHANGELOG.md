@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.5] - 2025-10-29
+
+### Fixed
+
+- **Critical**: Commands now use correct camelCase API keys
+  - Fixed `setTankWaterTemperature` (was `SetTankWaterTemperature`)
+  - Fixed `forcedHotWaterMode` (was `ForcedHotWaterMode`) - now sends boolean
+  - Fixed `prohibitHotWater` (was `ProhibitHotWater`) - now sends boolean
+  - Fixed ATW temperature commands to use `setTemperatureZone1` (was `setTemperature`)
+  - Removed unnecessary string conversions - API accepts proper types
+  - Commands now actually execute on MELCloud API
+
 ## [1.4.4] - 2025-10-29
 
 ### Fixed
