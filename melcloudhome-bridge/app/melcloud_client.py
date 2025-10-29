@@ -388,6 +388,23 @@ class MelCloudClient:
                 # Retry once after re-auth
                 return await self.set_device_state(device_id, state_changes)
             
+            # Check for JSON decode errors with 200 status (API returned empty body)
+            if ("decode JSON" in str(e) or "mimetype" in str(e).lower()) and "200" in str(e):
+                # MELCloud API returns 200 OK with empty body - this is actually success
+                self._logger.info(
+                    "Device command succeeded (API returned 200 OK with empty response)"
+                )
+                return  # Treat as success
+            
+            # Other JSON decode errors (not status 200)
+            if "decode JSON" in str(e) or "mimetype" in str(e).lower():
+                error_msg = (
+                    f"MELCloud API returned unexpected content type (not JSON) for device {device_id}. "
+                    f"Error: {str(e)}"
+                )
+                self._logger.error(error_msg)
+                raise ApiError(error_msg) from e
+            
             error_msg = f"Failed to update device state for {device_id}: {type(e).__name__} - {str(e)}"
             self._logger.error(error_msg)
             raise ApiError(error_msg) from e

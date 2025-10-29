@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.4.1] - 2025-10-29
+# Changelog
+
+## [1.4.7] - 2025-10-29
+
+### Fixed
+
+- Fixed pymelcloudhome library incompatibility - MELCloud API returns 200 OK with empty body for successful commands
+- Now correctly treats "200 + unexpected mimetype" responses as success instead of error
+- Commands will no longer fail with "Attempt to decode JSON with unexpected mimetype" error
+
+## [1.4.6] - 2025-10-29
 
 ### Fixed
 
