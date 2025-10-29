@@ -760,13 +760,13 @@ class MQTTBridge:
         # Convert device state to MQTT payload
         state_payload = device.to_mqtt_state()
         
-        # DEBUG: Log what we're publishing
+        # DEBUG: Log what we're publishing (convert payload to string to avoid key conflicts)
         self._logger.debug(
-            f"Publishing state for {device.device_name} to {state_topic}: {str(state_payload)}",
+            f"Publishing state for {device.device_name} to {state_topic}",
             extra={
                 "device_id": device.device_id,
                 "topic": state_topic,
-                "payload": state_payload
+                "payload_str": json.dumps(state_payload)
             }
         )
         

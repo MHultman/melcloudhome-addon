@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed KeyError in MQTT bridge state publishing debug logging when payload contains reserved key names
+
 ## [1.4.0] - 2025-10-29
 
 ### Added
