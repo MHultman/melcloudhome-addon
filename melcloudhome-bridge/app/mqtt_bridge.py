@@ -51,6 +51,7 @@ class MQTTBridge:
         self._logger = logger.bind(component="mqtt_bridge")
         self._command_callbacks: Dict[str, Callable] = {}
         self._reconnect_task: Optional[asyncio.Task] = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
         
         # Resilience features
         self._backoff = ExponentialBackoff(
@@ -114,9 +115,11 @@ class MQTTBridge:
             self._client.on_disconnect = self._on_disconnect
             self._client.on_message = self._on_message
             
+            # Store event loop reference for cross-thread async calls
+            self._loop = asyncio.get_event_loop()
+            
             # Connect (blocking call)
-            loop = asyncio.get_event_loop()
-            await loop.run_in_executor(
+            await self._loop.run_in_executor(
                 None,
                 self._client.connect,
                 self.host,
@@ -331,16 +334,11 @@ class MQTTBridge:
                 callback = self._command_callbacks[topic]
                 # If callback is a coroutine function, schedule it in the event loop
                 if asyncio.iscoroutinefunction(callback):
-                    try:
-                        loop = asyncio.get_event_loop()
-                        loop.create_task(callback(topic, payload))
-                    except RuntimeError:
-                        # No event loop, try to get running loop
-                        try:
-                            loop = asyncio.get_running_loop()
-                            loop.create_task(callback(topic, payload))
-                        except RuntimeError:
-                            self._logger.error(f"No event loop available to handle async callback for {topic}")
+                    if self._loop is not None:
+                        # Use run_coroutine_threadsafe to schedule from MQTT thread
+                        asyncio.run_coroutine_threadsafe(callback(topic, payload), self._loop)
+                    else:
+                        self._logger.error(f"No event loop available to handle async callback for {topic}")
                 else:
                     # Synchronous callback
                     callback(topic, payload)
