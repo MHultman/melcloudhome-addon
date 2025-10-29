@@ -631,6 +631,16 @@ class MQTTBridge:
         # Convert device state to MQTT payload
         state_payload = device.to_mqtt_state()
         
+        # DEBUG: Log what we're publishing
+        self._logger.debug(
+            f"Publishing state for {device.device_name} to {state_topic}: {state_payload}",
+            extra={
+                "device_id": device.device_id,
+                "topic": state_topic,
+                "payload": state_payload
+            }
+        )
+        
         # Publish state (not retained - changes frequently)
         await self.publish(
             state_topic,
