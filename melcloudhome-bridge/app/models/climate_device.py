@@ -188,33 +188,33 @@ class ClimateDevice(BaseModel):
         Returns:
             Dictionary suitable for MQTT state message
         """
-        # DEBUG: Log state conversion start with full state dump
+        # DEBUG: Log state conversion start
         from loguru import logger
-        import json
         
-        state_summary = {
-            "device_type": self.device_type,
-            "state_keys": list(self.state.keys()) if isinstance(self.state, dict) else [],
-            "has_settings": "settings" in self.state if isinstance(self.state, dict) else False,
-            "settings_count": len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
-        }
+        state_keys = list(self.state.keys()) if isinstance(self.state, dict) else []
+        has_settings = "settings" in self.state if isinstance(self.state, dict) else False
+        settings_count = len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
         
-        # If state has settings, show first few
-        if isinstance(self.state, dict) and "settings" in self.state:
-            settings = self.state.get("settings", [])
-            state_summary["first_5_settings"] = settings[:5] if settings else []
-        
-        state_str = json.dumps(state_summary, indent=2)
         logger.debug(
-            f"Converting state to MQTT for device {self.device_name}:\n{state_str}",
+            f"Converting state to MQTT for device {self.device_name}: "
+            f"type={self.device_type}, keys={state_keys}, "
+            f"has_settings={has_settings}, settings_count={settings_count}",
             extra={
                 "device_id": self.device_id,
                 "device_type": self.device_type,
-                "state_keys": list(self.state.keys()) if isinstance(self.state, dict) else [],
-                "has_settings": "settings" in self.state if isinstance(self.state, dict) else False,
-                "settings_count": len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
+                "state_keys": state_keys,
+                "has_settings": has_settings,
+                "settings_count": settings_count
             }
         )
+        
+        # If state has settings, show first few (using repr for safety)
+        if isinstance(self.state, dict) and "settings" in self.state:
+            settings = self.state.get("settings", [])
+            logger.debug(
+                f"Device {self.device_name} first 5 settings: {repr(settings[:5])}",
+                extra={"device_id": self.device_id, "settings_count": len(settings)}
+            )
         
         base_state = {
             "power": "ON" if self.get_power() else "OFF",

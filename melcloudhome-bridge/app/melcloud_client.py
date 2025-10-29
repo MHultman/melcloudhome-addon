@@ -249,12 +249,9 @@ class MelCloudClient:
             if state is None:
                 raise DeviceNotFoundError(f"Device {device_id} not found")
             
-            # DEBUG: Log the raw state response with JSON for readability
-            import json
-            
-            state_str = json.dumps(state, indent=2, default=str) if state else "None"
+            # DEBUG: Log the raw state response - use repr() for safe logging
             self._logger.debug(
-                f"Raw state for device {device_id}:\n{state_str}",
+                f"Raw state for device {device_id}: {repr(state)}",
                 extra={
                     "operation": "get_device_state",
                     "device_id": device_id,
@@ -267,14 +264,13 @@ class MelCloudClient:
             # If state is a dict with 'settings' array (ATW devices), log that too
             if isinstance(state, dict) and "settings" in state:
                 settings = state.get("settings", [])
-                settings_str = json.dumps(settings[:5], indent=2) if settings else "[]"
                 self._logger.debug(
-                    f"Device {device_id} has {len(settings)} settings. First 5:\n{settings_str}",
+                    f"Device {device_id} has {len(settings)} settings. First 5: {repr(settings[:5])}",
                     extra={
                         "operation": "get_device_state",
                         "device_id": device_id,
                         "settings_count": len(settings),
-                        "sample_settings": settings[:3] if len(settings) > 0 else []
+                        "sample_settings": repr(settings[:3]) if len(settings) > 0 else []
                     }
                 )
             
