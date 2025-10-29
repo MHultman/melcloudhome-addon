@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.6] - 2025-10-29
+
+### Fixed
+
+- **Critical**: Commands no longer hang indefinitely
+  - Added 30-second timeout to prevent hanging on pymelcloudhome API calls
+  - Fixed loguru KeyError when logging state_changes dict (keys treated as format strings)
+  - Improved error handling and logging in command handler
+  - Commands now properly timeout and report errors instead of hanging silently
+
 ## [1.4.5] - 2025-10-29
 
 ### Fixed
