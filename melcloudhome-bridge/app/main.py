@@ -290,9 +290,12 @@ class Application:
                     
                     discovered = True
                     
-                    # Initialize device states
+                    # Initialize device states and publish initial state
                     for device in self.devices:
                         self.device_states[device.device_id] = device.state.copy()
+                        # Publish initial state to MQTT
+                        await self.mqtt_bridge.publish_state(device)
+                        logger.debug(f"Published initial state for {device.device_name}")
                 
                 # Poll device states
                 state_changes = 0
