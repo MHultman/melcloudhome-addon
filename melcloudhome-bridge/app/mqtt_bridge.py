@@ -633,7 +633,7 @@ class MQTTBridge:
         
         # DEBUG: Log what we're publishing
         self._logger.debug(
-            f"Publishing state for {device.device_name} to {state_topic}: {state_payload}",
+            f"Publishing state for {device.device_name} to {state_topic}: {str(state_payload)}",
             extra={
                 "device_id": device.device_id,
                 "topic": state_topic,

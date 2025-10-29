@@ -223,7 +223,7 @@ class ClimateDevice(BaseModel):
             
             # DEBUG: Log each ATW value being set
             logger.debug(
-                f"ATW values for {self.device_name}: {atw_values}",
+                f"ATW values for {self.device_name}: {str(atw_values)}",
                 extra={"device_id": self.device_id, "atw_values": atw_values}
             )
             
