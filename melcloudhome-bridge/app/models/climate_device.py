@@ -191,30 +191,25 @@ class ClimateDevice(BaseModel):
         # DEBUG: Log state conversion start
         from loguru import logger
         
-        state_keys = list(self.state.keys()) if isinstance(self.state, dict) else []
-        has_settings = "settings" in self.state if isinstance(self.state, dict) else False
-        settings_count = len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
-        
-        logger.debug(
-            f"Converting state to MQTT for device {self.device_name}: "
-            f"type={self.device_type}, keys={state_keys}, "
-            f"has_settings={has_settings}, settings_count={settings_count}",
-            extra={
-                "device_id": self.device_id,
-                "device_type": self.device_type,
-                "state_keys": state_keys,
-                "has_settings": has_settings,
-                "settings_count": settings_count
-            }
-        )
-        
-        # If state has settings, show first few (using repr for safety)
-        if isinstance(self.state, dict) and "settings" in self.state:
-            settings = self.state.get("settings", [])
+        try:
+            state_keys = list(self.state.keys()) if isinstance(self.state, dict) else []
+            has_settings = "settings" in self.state if isinstance(self.state, dict) else False
+            settings_count = len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
+            
             logger.debug(
-                f"Device {self.device_name} first 5 settings: {repr(settings[:5])}",
-                extra={"device_id": self.device_id, "settings_count": len(settings)}
+                f"Converting state to MQTT for device {self.device_name}: "
+                f"type={self.device_type}, keys={state_keys}, "
+                f"has_settings={has_settings}, settings_count={settings_count}",
+                extra={
+                    "device_id": self.device_id,
+                    "device_type": self.device_type,
+                    "state_keys": state_keys,
+                    "has_settings": has_settings,
+                    "settings_count": settings_count
+                }
             )
+        except Exception as e:
+            logger.warning(f"Error logging state conversion start: {e}")
         
         base_state = {
             "power": "ON" if self.get_power() else "OFF",

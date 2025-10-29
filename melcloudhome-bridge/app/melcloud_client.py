@@ -249,30 +249,50 @@ class MelCloudClient:
             if state is None:
                 raise DeviceNotFoundError(f"Device {device_id} not found")
             
-            # DEBUG: Log the raw state response - use repr() for safe logging
-            self._logger.debug(
-                f"Raw state for device {device_id}: {repr(state)}",
-                extra={
-                    "operation": "get_device_state",
-                    "device_id": device_id,
-                    "duration_seconds": round(duration, 3),
-                    "state_keys": list(state.keys()) if isinstance(state, dict) else "not_a_dict",
-                    "state_type": type(state).__name__
-                }
-            )
-            
-            # If state is a dict with 'settings' array (ATW devices), log that too
-            if isinstance(state, dict) and "settings" in state:
-                settings = state.get("settings", [])
+            # DEBUG: Log the raw state response - safely handle any type
+            try:
+                state_keys = list(state.keys()) if isinstance(state, dict) else []
+                state_type = type(state).__name__
+                
                 self._logger.debug(
-                    f"Device {device_id} has {len(settings)} settings. First 5: {repr(settings[:5])}",
+                    f"Raw state for device {device_id}: type={state_type}, keys={state_keys}",
                     extra={
                         "operation": "get_device_state",
                         "device_id": device_id,
-                        "settings_count": len(settings),
-                        "sample_settings": repr(settings[:3]) if len(settings) > 0 else []
+                        "duration_seconds": round(duration, 3),
+                        "state_keys": state_keys,
+                        "state_type": state_type
                     }
                 )
+                
+                # If state is a dict with 'settings' array (ATW devices), log that too
+                if isinstance(state, dict) and "settings" in state:
+                    settings = state.get("settings", [])
+                    self._logger.debug(
+                        f"Device {device_id} has {len(settings)} settings",
+                        extra={
+                            "operation": "get_device_state",
+                            "device_id": device_id,
+                            "settings_count": len(settings)
+                        }
+                    )
+                    
+                    # Try to log first few settings safely
+                    if settings and len(settings) > 0:
+                        for i, setting in enumerate(settings[:5]):
+                            try:
+                                if isinstance(setting, dict):
+                                    name = setting.get("name", "?")
+                                    value = setting.get("value", "?")
+                                    self._logger.debug(
+                                        f"  Setting {i}: name={name}, value={value}",
+                                        extra={"device_id": device_id, "setting_index": i}
+                                    )
+                            except Exception as e:
+                                self._logger.debug(f"  Setting {i}: <error accessing: {e}>")
+                
+            except Exception as e:
+                self._logger.warning(f"Error logging state details: {e}")
             
             # Log capabilities if present
             if isinstance(state, dict) and "capabilities" in state:
