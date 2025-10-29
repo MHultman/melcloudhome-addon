@@ -23,6 +23,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set lowercase repository name
+        id: repo
+        run: echo "name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
@@ -41,7 +45,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/${{ github.repository }}
+          images: ghcr.io/${{ steps.repo.outputs.name }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -79,6 +83,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set lowercase repository name
+        id: repo
+        run: echo "name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -88,8 +96,8 @@ jobs:
 
       - name: Create and push manifest
         run: |
-          docker buildx imagetools create -t ghcr.io/${{ github.repository }}:latest \
-            ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-amd64 \
-            ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-aarch64 \
-            ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-armv7
+          docker buildx imagetools create -t ghcr.io/${{ steps.repo.outputs.name }}:latest \
+            ghcr.io/${{ steps.repo.outputs.name }}:sha-${{ github.sha }}-amd64 \
+            ghcr.io/${{ steps.repo.outputs.name }}:sha-${{ github.sha }}-aarch64 \
+            ghcr.io/${{ steps.repo.outputs.name }}:sha-${{ github.sha }}-armv7
         if: github.ref == 'refs/heads/master'
