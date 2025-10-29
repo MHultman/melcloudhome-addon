@@ -35,4 +35,8 @@ schema:
   mqtt_base_topic: str
   poll_interval: int(10,600)
   log_level: list(DEBUG|INFO|WARNING|ERROR)?
+<<<<<<< HEAD
 image: "ghcr.io/mhultman/melcloudhome-addon-{arch}"
+=======
+image: "ghcr.io/{arch}-melcloudhome-bridge"
+>>>>>>> 63f777ff905a74e7262e8ea288f6adcfc12c20ba

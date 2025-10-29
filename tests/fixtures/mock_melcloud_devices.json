@@ -1,0 +1,70 @@
+{
+  "devices": [
+    {
+      "id": "12345678-1234-1234-1234-123456789abc",
+      "given_display_name": "Living Room AC",
+      "device_type": "ataunit",
+      "building_name": "Home",
+      "state": {
+        "power": true,
+        "setTemperature": 22.0,
+        "roomTemperature": 21.5,
+        "operationMode": "cool",
+        "fanSpeed": 3,
+        "vaneHorizontalDirection": 3,
+        "vaneVerticalDirection": 3,
+        "effectiveFlags": 0,
+        "offline": false,
+        "hasError": false
+      }
+    },
+    {
+      "id": "87654321-4321-4321-4321-cba987654321",
+      "given_display_name": "Bedroom Heat Pump",
+      "device_type": "ataunit",
+      "building_name": "Home",
+      "state": {
+        "power": false,
+        "setTemperature": 20.0,
+        "roomTemperature": 19.0,
+        "operationMode": "heat",
+        "fanSpeed": 2,
+        "vaneHorizontalDirection": 0,
+        "vaneVerticalDirection": 0,
+        "effectiveFlags": 0,
+        "offline": false,
+        "hasError": false
+      }
+    },
+    {
+      "id": "abcd1234-5678-90ef-ghij-klmnopqrstuv",
+      "given_display_name": "Garage ATW System",
+      "device_type": "atwunit",
+      "building_name": "Home",
+      "state": {
+        "power": true,
+        "setTemperature": 45.0,
+        "roomTemperature": 23.0,
+        "operationMode": "heat",
+        "setTankWaterTemperature": 55.0,
+        "tankWaterTemperature": 52.0,
+        "offline": false,
+        "hasError": false,
+        "settings": [
+          { "id": 2, "value": 1 },
+          { "id": 5, "value": 45.0 },
+          { "id": 8, "value": 55.0 }
+        ]
+      }
+    }
+  ],
+  "description": "Mock MELCloud device data for testing",
+  "notes": [
+    "ATA devices (Air-to-Air): Standard split AC units",
+    "ATW devices (Air-to-Water): Heat pump systems with hot water tank",
+    "All temperatures are in Celsius",
+    "operationMode values: heat, cool, auto, dry, fan",
+    "hasError: false means device is operational",
+    "offline: false means device is reachable"
+  ]
+}

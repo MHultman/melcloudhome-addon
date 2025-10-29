@@ -1,0 +1,82 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Home Assistant Add-on Configuration Schema",
+  "description": "Configuration options for MELCloud Home Bridge add-on",
+  "type": "object",
+  "required": ["melcloud_email", "melcloud_password", "mqtt_host", "mqtt_port"],
+  "properties": {
+    "melcloud_email": {
+      "type": "string",
+      "format": "email",
+      "description": "MELCloud account email address",
+      "example": "user@example.com"
+    },
+    "melcloud_password": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MELCloud account password",
+      "example": "MySecurePassword123"
+    },
+    "mqtt_host": {
+      "type": "string",
+      "minLength": 1,
+      "description": "MQTT broker hostname or IP address",
+      "default": "core-mosquitto",
+      "example": "core-mosquitto"
+    },
+    "mqtt_port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "MQTT broker port",
+      "default": 1883,
+      "example": 1883
+    },
+    "mqtt_username": {
+      "type": "string",
+      "description": "MQTT broker username (optional)",
+      "default": "",
+      "example": "homeassistant"
+    },
+    "mqtt_password": {
+      "type": "string",
+      "description": "MQTT broker password (optional)",
+      "default": "",
+      "example": "mqtt_password"
+    },
+    "mqtt_base_topic": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-zA-Z0-9_-]+$",
+      "description": "MQTT Discovery base topic",
+      "default": "homeassistant",
+      "example": "homeassistant"
+    },
+    "poll_interval": {
+      "type": "integer",
+      "minimum": 10,
+      "maximum": 3600,
+      "description": "Polling interval in seconds (10-3600)",
+      "default": 60,
+      "example": 60
+    },
+    "log_level": {
+      "type": "string",
+      "enum": ["DEBUG", "INFO", "WARNING", "ERROR"],
+      "description": "Logging verbosity level",
+      "default": "INFO",
+      "example": "INFO"
+    }
+  },
+  "example": {
+    "melcloud_email": "user@example.com",
+    "melcloud_password": "MySecurePassword123",
+    "mqtt_host": "core-mosquitto",
+    "mqtt_port": 1883,
+    "mqtt_username": "",
+    "mqtt_password": "",
+    "mqtt_base_topic": "homeassistant",
+    "poll_interval": 60,
+    "log_level": "INFO"
+  }
+}

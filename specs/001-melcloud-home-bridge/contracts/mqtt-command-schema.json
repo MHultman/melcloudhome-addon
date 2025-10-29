@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "MQTT Command Messages for Climate Entity",
+  "description": "Command payloads received from Home Assistant via MQTT",
+  "oneOf": [
+    {
+      "title": "Temperature Command",
+      "description": "Set target temperature",
+      "type": "object",
+      "required": ["temperature"],
+      "properties": {
+        "temperature": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 50,
+          "description": "Target temperature to set",
+          "example": 22.0
+        }
+      },
+      "example": {
+        "temperature": 22.0
+      }
+    },
+    {
+      "title": "Mode Command",
+      "description": "Set HVAC mode",
+      "type": "object",
+      "required": ["mode"],
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["off", "heat", "cool", "auto", "dry", "fan_only"],
+          "description": "HVAC mode to set",
+          "example": "cool"
+        }
+      },
+      "example": {
+        "mode": "cool"
+      }
+    }
+  ]
+}
