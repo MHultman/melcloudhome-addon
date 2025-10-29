@@ -198,9 +198,24 @@ class ClimateDevice(BaseModel):
         """
         from loguru import logger
         
-        # DEBUG: Log the raw state we're working with
+        # DEBUG: Log state conversion start with full state dump
+        import json
+        
+        state_summary = {
+            "device_type": self.device_type,
+            "state_keys": list(self.state.keys()) if isinstance(self.state, dict) else [],
+            "has_settings": "settings" in self.state if isinstance(self.state, dict) else False,
+            "settings_count": len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
+        }
+        
+        # If state has settings, show first few
+        if isinstance(self.state, dict) and "settings" in self.state:
+            settings = self.state.get("settings", [])
+            state_summary["first_5_settings"] = settings[:5] if settings else []
+        
+        state_str = json.dumps(state_summary, indent=2)
         logger.debug(
-            f"Converting state to MQTT for device {self.device_name} ({self.device_type})",
+            f"Converting state to MQTT for device {self.device_name}:\n{state_str}",
             extra={
                 "device_id": self.device_id,
                 "device_type": self.device_type,

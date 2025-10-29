@@ -249,9 +249,12 @@ class MelCloudClient:
             if state is None:
                 raise DeviceNotFoundError(f"Device {device_id} not found")
             
-            # DEBUG: Log the raw state response
+            # DEBUG: Log the raw state response with JSON for readability
+            import json
+            
+            state_str = json.dumps(state, indent=2, default=str) if state else "None"
             self._logger.debug(
-                f"Raw state for device {device_id}: {state}",
+                f"Raw state for device {device_id}:\n{state_str}",
                 extra={
                     "operation": "get_device_state",
                     "device_id": device_id,
@@ -264,8 +267,9 @@ class MelCloudClient:
             # If state is a dict with 'settings' array (ATW devices), log that too
             if isinstance(state, dict) and "settings" in state:
                 settings = state.get("settings", [])
+                settings_str = json.dumps(settings[:5], indent=2) if settings else "[]"
                 self._logger.debug(
-                    f"Device {device_id} has {len(settings)} settings",
+                    f"Device {device_id} has {len(settings)} settings. First 5:\n{settings_str}",
                     extra={
                         "operation": "get_device_state",
                         "device_id": device_id,
@@ -288,15 +292,15 @@ class MelCloudClient:
                     }
                 )
             
-            # DEBUG: Log the complete retrieved state
+            # DEBUG: Summary log
             self._logger.debug(
-                f"Retrieved state for device {device_id}: {state}",
+                f"Retrieved state for device {device_id} in {duration:.2f}s - "
+                f"keys: {list(state.keys()) if isinstance(state, dict) else 'N/A'}",
                 extra={
                     "operation": "get_device_state",
                     "device_id": device_id,
                     "duration_seconds": f"{duration:.2f}",
-                    "state_keys": list(state.keys()) if state else [],
-                    "full_state": state
+                    "state_keys": list(state.keys()) if state else []
                 }
             )
             
