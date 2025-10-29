@@ -42,7 +42,9 @@ class ClimateDevice(BaseModel):
         """
         Extract setting value from ATW state dictionary.
         
-        ATW devices return state as a flat dict: {"Power": "True", "OperationModeZone1": "Heat", ...}
+        ATW devices can return state in two formats:
+        1. Flat dict: {"Power": "True", "OperationModeZone1": "Heat", ...}
+        2. Settings array: {"settings": [{"name": "Power", "value": "True"}, ...]}
         
         Args:
             setting_name: Setting name to extract
@@ -56,14 +58,28 @@ class ClimateDevice(BaseModel):
             logger.debug(f"Not an ATW device (type={self.device_type}), cannot get setting {setting_name}")
             return None
         
-        # State is a flat dictionary, just get the value directly
-        if isinstance(self.state, dict) and setting_name in self.state:
+        if not isinstance(self.state, dict):
+            return None
+        
+        # Try flat dictionary format first (production API format)
+        if setting_name in self.state:
             value = self.state.get(setting_name)
             logger.debug(
                 f"Found setting '{setting_name}' = '{value}'",
                 extra={"device_id": self.device_id, "setting_name": setting_name, "value": value}
             )
             return str(value) if value is not None else None
+        
+        # Try settings array format (test fixture format)
+        if "settings" in self.state and isinstance(self.state["settings"], list):
+            for setting in self.state["settings"]:
+                if isinstance(setting, dict) and setting.get("name") == setting_name:
+                    value = setting.get("value")
+                    logger.debug(
+                        f"Found setting '{setting_name}' = '{value}' in settings array",
+                        extra={"device_id": self.device_id, "setting_name": setting_name, "value": value}
+                    )
+                    return str(value) if value is not None else None
         
         logger.debug(
             f"Setting '{setting_name}' not found in state",
@@ -205,6 +221,7 @@ class ClimateDevice(BaseModel):
         base_state = {
             "power": "ON" if self.get_power() else "OFF",
             "available": self.online,
+            "mode": "unknown",  # Default mode, will be overridden per device type
         }
         
         if self.device_type == "ataunit":
@@ -218,7 +235,7 @@ class ClimateDevice(BaseModel):
         elif self.device_type == "atwunit":
             # ATW: Hydronic heating with zones + hot water tank
             atw_values = {
-                "mode": self._get_atw_setting("OperationMode"),
+                "mode": self._get_atw_setting("OperationMode") or "unknown",
                 "current_temperature": self.get_temperature(),  # Zone 1 room temp
                 "temperature": self.get_target_temperature(),  # Zone 1 target
                 "tank_temperature": self.get_tank_temperature(),
@@ -230,8 +247,9 @@ class ClimateDevice(BaseModel):
             }
             
             # DEBUG: Log each ATW value being set
+            atw_values_str = ", ".join(f"{k}={v}" for k, v in atw_values.items())
             logger.debug(
-                f"ATW values for {self.device_name}: {str(atw_values)}",
+                f"ATW values for {self.device_name}: {atw_values_str}",
                 extra={"device_id": self.device_id, "atw_values": atw_values}
             )
             
