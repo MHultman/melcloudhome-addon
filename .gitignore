@@ -48,6 +48,11 @@ coverage.xml
 *.swo
 *~
 .DS_Store
+
+# Local test credentials (DO NOT COMMIT)
+.env.local
+test-credentials.env
+credentials.env
 Thumbs.db
 
 # Logs
