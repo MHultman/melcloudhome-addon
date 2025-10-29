@@ -279,12 +279,13 @@ class Application:
                     # Subscribe to command topics
                     logger.info("Subscribing to command topics...")
                     for device in self.devices:
-                        # Subscribe with callback that handles both temperature and mode
+                        # Create async wrapper for each device
+                        async def command_callback(topic: str, payload: str, dev=device):
+                            await self._handle_command(dev, topic, payload)
+                        
                         await self.mqtt_bridge.subscribe_to_commands(
                             device,
-                            lambda topic, payload, dev=device: asyncio.create_task(
-                                self._handle_command(dev, topic, payload)
-                            )
+                            command_callback
                         )
                     
                     discovered = True

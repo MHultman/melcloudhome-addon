@@ -328,9 +328,25 @@ class MQTTBridge:
         # Dispatch to registered callback if exists
         if topic in self._command_callbacks:
             try:
-                self._command_callbacks[topic](topic, payload)
+                callback = self._command_callbacks[topic]
+                # If callback is a coroutine function, schedule it in the event loop
+                if asyncio.iscoroutinefunction(callback):
+                    try:
+                        loop = asyncio.get_event_loop()
+                        loop.create_task(callback(topic, payload))
+                    except RuntimeError:
+                        # No event loop, try to get running loop
+                        try:
+                            loop = asyncio.get_running_loop()
+                            loop.create_task(callback(topic, payload))
+                        except RuntimeError:
+                            self._logger.error(f"No event loop available to handle async callback for {topic}")
+                else:
+                    # Synchronous callback
+                    callback(topic, payload)
             except Exception as e:
                 self._logger.error(f"Error handling MQTT message on {topic}: {e}")
+
     
     async def disconnect(self) -> None:
         """Gracefully disconnect from MQTT broker."""
