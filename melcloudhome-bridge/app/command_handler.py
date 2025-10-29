@@ -70,9 +70,15 @@ class CommandHandler:
         
         try:
             # Build state change payload
-            state_changes = {
-                "setTemperature": temperature
-            }
+            # ATW devices use setTemperatureZone1, ATA devices use setTemperature
+            if device.device_type == "atwunit":
+                state_changes = {
+                    "setTemperatureZone1": temperature
+                }
+            else:
+                state_changes = {
+                    "setTemperature": temperature
+                }
             
             # Execute command
             await self.melcloud_client.set_device_state(
@@ -182,7 +188,7 @@ class CommandHandler:
         try:
             # Build state change payload
             state_changes = {
-                "SetTankWaterTemperature": str(int(temperature))
+                "setTankWaterTemperature": int(temperature)
             }
             
             # Execute command
@@ -234,7 +240,7 @@ class CommandHandler:
         try:
             # Build state change payload
             state_changes = {
-                "ForcedHotWaterMode": "True" if enabled else "False"
+                "forcedHotWaterMode": enabled
             }
             
             # Execute command
@@ -286,7 +292,7 @@ class CommandHandler:
         try:
             # Build state change payload
             state_changes = {
-                "ProhibitHotWater": "True" if enabled else "False"
+                "prohibitHotWater": enabled
             }
             
             # Execute command
