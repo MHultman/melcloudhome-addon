@@ -1,19 +1,6 @@
-# Use automatic platform detection
-ARG TARGETARCH
-ARG TARGETVARIANT
-
-# Select base image based on target architecture
-# linux/amd64 -> amd64-base-python
-# linux/arm64 -> aarch64-base-python
-# linux/arm/v7 -> armv7-base-python
-FROM ghcr.io/home-assistant/amd64-base-python:3.11-alpine3.18 AS base-amd64
-FROM ghcr.io/home-assistant/aarch64-base-python:3.11-alpine3.18 AS base-arm64
-FROM ghcr.io/home-assistant/armv7-base-python:3.11-alpine3.18 AS base-armv7
-
-# Select the appropriate base for the target platform
-ARG TARGETARCH
-ARG TARGETVARIANT
-FROM base-${TARGETARCH}${TARGETVARIANT}
+# Use build argument to select the correct base image
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.11-alpine3.18
+FROM ${BUILD_FROM}
 
 # Install system dependencies including Chromium
 # Chromium is required for pymelcloudhome authentication on all architectures
