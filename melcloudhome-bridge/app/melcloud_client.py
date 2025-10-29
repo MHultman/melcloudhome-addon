@@ -114,8 +114,10 @@ class MelCloudClient:
             # Create client with system Chromium path for Alpine Linux
             # pymelcloudhome v0.3.0+ supports chromium_executable_path for ARM64/Alpine
             # Alpine Linux uses /usr/bin/chromium as the executable path
+            # Disable caching to get real-time state updates
             self._client = MelCloudHomeClient(
-                chromium_executable_path='/usr/bin/chromium'  # type: ignore[call-arg]
+                chromium_executable_path='/usr/bin/chromium',  # type: ignore[call-arg]
+                cache_duration_minutes=0  # type: ignore[call-arg]
             )
             await self._client.login(
                 email=self.credentials.email,

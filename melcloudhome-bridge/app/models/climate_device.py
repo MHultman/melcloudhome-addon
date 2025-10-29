@@ -181,7 +181,7 @@ class ClimateDevice(BaseModel):
             
             logger.debug(
                 f"Converting state to MQTT for device {self.device_name}: "
-                f"type={self.device_type}, keys={state_keys}, "
+                f"type={self.device_type}, keys={str(state_keys)}, "
                 f"has_settings={has_settings}, settings_count={settings_count}",
                 extra={
                     "device_id": self.device_id,
