@@ -15,9 +15,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    strategy:
-      matrix:
-        arch: [amd64, aarch64, armv7]
 
     steps:
       - name: Checkout code
@@ -53,51 +50,19 @@ jobs:
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             type=sha
+            type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
-          platforms: linux/${{ matrix.arch }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            BUILD_ARCH=${{ matrix.arch }}
             BUILD_DATE=${{ github.event.repository.updated_at }}
             BUILD_REF=${{ github.sha }}
             BUILD_VERSION=${{ github.ref_name }}
-
-  manifest:
-    name: Create Multi-Arch Manifest
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name != 'pull_request'
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set lowercase repository name
-        id: repo
-        run: echo "name=$(echo ${{ github.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Create and push manifest
-        run: |
-          docker buildx imagetools create -t ghcr.io/${{ steps.repo.outputs.name }}:latest \
-            ghcr.io/${{ steps.repo.outputs.name }}:sha-${{ github.sha }}-amd64 \
-            ghcr.io/${{ steps.repo.outputs.name }}:sha-${{ github.sha }}-aarch64 \
-            ghcr.io/${{ steps.repo.outputs.name }}:sha-${{ github.sha }}-armv7
-        if: github.ref == 'refs/heads/master'
