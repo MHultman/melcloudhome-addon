@@ -1,6 +1,6 @@
 """Climate device entity wrapping pymelcloudhome Device with state."""
 
-from typing import Optional, Dict, Any, Literal, List
+from typing import Optional, Dict, Any, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -40,9 +40,9 @@ class ClimateDevice(BaseModel):
     
     def _get_atw_setting(self, setting_name: str) -> Optional[str]:
         """
-        Extract setting value from ATW settings array.
+        Extract setting value from ATW state dictionary.
         
-        ATW devices return settings as: [{"name": "Power", "value": "True"}, ...]
+        ATW devices return state as a flat dict: {"Power": "True", "OperationModeZone1": "Heat", ...}
         
         Args:
             setting_name: Setting name to extract
@@ -55,39 +55,22 @@ class ClimateDevice(BaseModel):
         if self.device_type != "atwunit":
             logger.debug(f"Not an ATW device (type={self.device_type}), cannot get setting {setting_name}")
             return None
-            
-        if "settings" not in self.state:
+        
+        # State is a flat dictionary, just get the value directly
+        if isinstance(self.state, dict) and setting_name in self.state:
+            value = self.state.get(setting_name)
             logger.debug(
-                f"No 'settings' key in state for device {self.device_name}",
-                extra={
-                    "device_id": self.device_id,
-                    "setting_name": setting_name,
-                    "state_keys": list(self.state.keys())
-                }
+                f"Found setting '{setting_name}' = '{value}'",
+                extra={"device_id": self.device_id, "setting_name": setting_name, "value": value}
             )
-            return None
-        
-        settings: List[Dict[str, str]] = self.state.get("settings", [])
-        logger.debug(
-            f"Looking for setting '{setting_name}' in {len(settings)} settings",
-            extra={"device_id": self.device_id, "setting_name": setting_name, "settings_count": len(settings)}
-        )
-        
-        for setting in settings:
-            if setting.get("name") == setting_name:
-                value = setting.get("value")
-                logger.debug(
-                    f"Found setting '{setting_name}' = '{value}'",
-                    extra={"device_id": self.device_id, "setting_name": setting_name, "value": value}
-                )
-                return value
+            return str(value) if value is not None else None
         
         logger.debug(
-            f"Setting '{setting_name}' not found in settings array",
+            f"Setting '{setting_name}' not found in state",
             extra={
                 "device_id": self.device_id,
                 "setting_name": setting_name,
-                "available_settings": [s.get("name") for s in settings[:10]]  # Show first 10
+                "available_keys": list(self.state.keys()) if isinstance(self.state, dict) else []
             }
         )
         return None
