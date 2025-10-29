@@ -2,10 +2,10 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [master]
     tags: ["v*"]
   pull_request:
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 jobs:
@@ -92,4 +92,4 @@ jobs:
             ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-amd64 \
             ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-aarch64 \
             ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-armv7
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/master'
