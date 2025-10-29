@@ -434,6 +434,7 @@ class MQTTBridge:
         # Publish additional sensors for ATW devices
         if device.device_type == "atwunit":
             await self._publish_atw_sensors(device)
+            await self._publish_atw_controls(device)
     
     async def _publish_atw_sensors(self, device: ClimateDevice) -> None:
         """
@@ -596,6 +597,267 @@ class MQTTBridge:
         
         self._logger.info(f"Published ATW sensor discoveries for {device.device_name}")
     
+    async def _publish_atw_controls(self, device: ClimateDevice) -> None:
+        """
+        Publish control entity discoveries for ATW devices.
+        
+        These entities allow users to control device settings from Home Assistant:
+        - Power switch
+        - Tank water temperature setpoint
+        - Forced hot water mode switch
+        - Zone 1 temperature setpoint
+        - Zone 1 operation mode select
+        - Zone 1 heat/cool flow temperatures
+        - Zone 2 controls (if supported)
+        
+        Args:
+            device: ATW ClimateDevice
+        """
+        device_id_sanitized = sanitize_mqtt_topic(device.device_id)
+        availability_topic = f"{self.base_topic}/climate/{device_id_sanitized}/availability"
+        
+        # Device info (shared across all entities)
+        device_info = {
+            "identifiers": [f"melcloud_{device_id_sanitized}"],
+            "name": device.device_name,
+            "manufacturer": "Mitsubishi Electric",
+            "model": device.device_type.upper(),
+            "sw_version": "1.0.0"
+        }
+        
+        # Get device capabilities for validation
+        capabilities = device.state.get("Capabilities", {})
+        has_hot_water = capabilities.get("hasHotWater", False)
+        has_zone2 = capabilities.get("hasZone2", False)
+        min_temp = capabilities.get("minSetTemperature", 16)
+        max_temp = capabilities.get("maxSetTemperature", 30)
+        temp_step = capabilities.get("temperatureIncrement", 0.5)
+        min_tank_temp = capabilities.get("minSetTankTemperature", 40)
+        max_tank_temp = capabilities.get("maxSetTankTemperature", 60)
+        
+        # Power Switch
+        await self.publish(
+            f"{self.base_topic}/switch/{device_id_sanitized}_power/config",
+            json.dumps({
+                "name": f"{device.device_name} Power",
+                "unique_id": f"melcloud_{device_id_sanitized}_power",
+                "device": device_info,
+                "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                "value_template": "{{ 'ON' if value_json.power else 'OFF' }}",
+                "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_power",
+                "availability_topic": availability_topic,
+                "payload_on": "ON",
+                "payload_off": "OFF",
+                "icon": "mdi:power",
+            }),
+            retain=True
+        )
+        
+        # Zone 1 Temperature Setpoint (Number)
+        await self.publish(
+            f"{self.base_topic}/number/{device_id_sanitized}_zone1_temp/config",
+            json.dumps({
+                "name": f"{device.device_name} Zone 1 Temperature",
+                "unique_id": f"melcloud_{device_id_sanitized}_zone1_temp",
+                "device": device_info,
+                "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                "value_template": "{{ value_json.set_temperature_zone1 }}",
+                "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone1_temperature",
+                "availability_topic": availability_topic,
+                "min": min_temp,
+                "max": max_temp,
+                "step": temp_step,
+                "unit_of_measurement": "°C",
+                "device_class": "temperature",
+                "mode": "slider",
+            }),
+            retain=True
+        )
+        
+        # Zone 1 Operation Mode (Select)
+        await self.publish(
+            f"{self.base_topic}/select/{device_id_sanitized}_zone1_op_mode/config",
+            json.dumps({
+                "name": f"{device.device_name} Zone 1 Operation Mode",
+                "unique_id": f"melcloud_{device_id_sanitized}_zone1_op_mode",
+                "device": device_info,
+                "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                "value_template": "{{ value_json.operation_mode_zone1 }}",
+                "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone1_operation_mode",
+                "availability_topic": availability_topic,
+                "options": ["HeatRoomTemperature", "HeatFlowTemperature", "HeatCurve"],
+                "icon": "mdi:home-thermometer-outline",
+            }),
+            retain=True
+        )
+        
+        # Zone 1 Heat Flow Temperature (Number)
+        await self.publish(
+            f"{self.base_topic}/number/{device_id_sanitized}_zone1_heat_flow/config",
+            json.dumps({
+                "name": f"{device.device_name} Zone 1 Heat Flow Temperature",
+                "unique_id": f"melcloud_{device_id_sanitized}_zone1_heat_flow",
+                "device": device_info,
+                "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                "value_template": "{{ value_json.set_heat_flow_temperature_zone1 }}",
+                "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone1_heat_flow_temperature",
+                "availability_topic": availability_topic,
+                "min": 20,
+                "max": 60,
+                "step": 1,
+                "unit_of_measurement": "°C",
+                "device_class": "temperature",
+                "mode": "box",
+            }),
+            retain=True
+        )
+        
+        # Zone 1 Cool Flow Temperature (Number)
+        await self.publish(
+            f"{self.base_topic}/number/{device_id_sanitized}_zone1_cool_flow/config",
+            json.dumps({
+                "name": f"{device.device_name} Zone 1 Cool Flow Temperature",
+                "unique_id": f"melcloud_{device_id_sanitized}_zone1_cool_flow",
+                "device": device_info,
+                "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                "value_template": "{{ value_json.set_cool_flow_temperature_zone1 }}",
+                "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone1_cool_flow_temperature",
+                "availability_topic": availability_topic,
+                "min": 5,
+                "max": 25,
+                "step": 1,
+                "unit_of_measurement": "°C",
+                "device_class": "temperature",
+                "mode": "box",
+            }),
+            retain=True
+        )
+        
+        # Hot Water Controls (only if supported)
+        if has_hot_water:
+            # Tank Water Temperature Setpoint (Number)
+            await self.publish(
+                f"{self.base_topic}/number/{device_id_sanitized}_tank_temp_set/config",
+                json.dumps({
+                    "name": f"{device.device_name} Tank Temperature Setpoint",
+                    "unique_id": f"melcloud_{device_id_sanitized}_tank_temp_set",
+                    "device": device_info,
+                    "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                    "value_template": "{{ value_json.tank_target_temperature }}",
+                    "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_tank_temperature",
+                    "availability_topic": availability_topic,
+                    "min": min_tank_temp,
+                    "max": max_tank_temp,
+                    "step": 1,
+                    "unit_of_measurement": "°C",
+                    "device_class": "temperature",
+                    "mode": "slider",
+                }),
+                retain=True
+            )
+            
+            # Forced Hot Water Mode (Switch)
+            await self.publish(
+                f"{self.base_topic}/switch/{device_id_sanitized}_forced_hw/config",
+                json.dumps({
+                    "name": f"{device.device_name} Forced Hot Water Mode",
+                    "unique_id": f"melcloud_{device_id_sanitized}_forced_hw_switch",
+                    "device": device_info,
+                    "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                    "value_template": "{{ 'ON' if value_json.forced_hot_water else 'OFF' }}",
+                    "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_forced_hot_water",
+                    "availability_topic": availability_topic,
+                    "payload_on": "ON",
+                    "payload_off": "OFF",
+                    "icon": "mdi:water-boiler-alert",
+                }),
+                retain=True
+            )
+        
+        # Zone 2 Controls (only if supported)
+        if has_zone2:
+            # Zone 2 Temperature Setpoint
+            await self.publish(
+                f"{self.base_topic}/number/{device_id_sanitized}_zone2_temp/config",
+                json.dumps({
+                    "name": f"{device.device_name} Zone 2 Temperature",
+                    "unique_id": f"melcloud_{device_id_sanitized}_zone2_temp",
+                    "device": device_info,
+                    "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                    "value_template": "{{ value_json.set_temperature_zone2 }}",
+                    "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone2_temperature",
+                    "availability_topic": availability_topic,
+                    "min": min_temp,
+                    "max": max_temp,
+                    "step": temp_step,
+                    "unit_of_measurement": "°C",
+                    "device_class": "temperature",
+                    "mode": "slider",
+                }),
+                retain=True
+            )
+            
+            # Zone 2 Operation Mode
+            await self.publish(
+                f"{self.base_topic}/select/{device_id_sanitized}_zone2_op_mode/config",
+                json.dumps({
+                    "name": f"{device.device_name} Zone 2 Operation Mode",
+                    "unique_id": f"melcloud_{device_id_sanitized}_zone2_op_mode",
+                    "device": device_info,
+                    "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                    "value_template": "{{ value_json.operation_mode_zone2 }}",
+                    "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone2_operation_mode",
+                    "availability_topic": availability_topic,
+                    "options": ["HeatRoomTemperature", "HeatFlowTemperature", "HeatCurve"],
+                    "icon": "mdi:home-thermometer-outline",
+                }),
+                retain=True
+            )
+            
+            # Zone 2 Heat Flow Temperature
+            await self.publish(
+                f"{self.base_topic}/number/{device_id_sanitized}_zone2_heat_flow/config",
+                json.dumps({
+                    "name": f"{device.device_name} Zone 2 Heat Flow Temperature",
+                    "unique_id": f"melcloud_{device_id_sanitized}_zone2_heat_flow",
+                    "device": device_info,
+                    "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                    "value_template": "{{ value_json.set_heat_flow_temperature_zone2 }}",
+                    "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone2_heat_flow_temperature",
+                    "availability_topic": availability_topic,
+                    "min": 20,
+                    "max": 60,
+                    "step": 1,
+                    "unit_of_measurement": "°C",
+                    "device_class": "temperature",
+                    "mode": "box",
+                }),
+                retain=True
+            )
+            
+            # Zone 2 Cool Flow Temperature
+            await self.publish(
+                f"{self.base_topic}/number/{device_id_sanitized}_zone2_cool_flow/config",
+                json.dumps({
+                    "name": f"{device.device_name} Zone 2 Cool Flow Temperature",
+                    "unique_id": f"melcloud_{device_id_sanitized}_zone2_cool_flow",
+                    "device": device_info,
+                    "state_topic": f"{self.base_topic}/climate/{device_id_sanitized}/state",
+                    "value_template": "{{ value_json.set_cool_flow_temperature_zone2 }}",
+                    "command_topic": f"{self.base_topic}/climate/{device_id_sanitized}/set_zone2_cool_flow_temperature",
+                    "availability_topic": availability_topic,
+                    "min": 5,
+                    "max": 25,
+                    "step": 1,
+                    "unit_of_measurement": "°C",
+                    "device_class": "temperature",
+                    "mode": "box",
+                }),
+                retain=True
+            )
+        
+        self._logger.info(f"Published ATW control entity discoveries for {device.device_name}")
+    
     def _get_modes_for_device(self, device: ClimateDevice) -> list:
         """
         Get available modes for device type.
@@ -742,14 +1004,35 @@ class MQTTBridge:
             callback: Callback function(topic, payload) to handle commands
         """
         device_id_sanitized = sanitize_mqtt_topic(device.device_id)
+        base_topic = f"{self.base_topic}/climate/{device_id_sanitized}"
         
-        # Subscribe to temperature commands
-        temp_topic = f"{self.base_topic}/climate/{device_id_sanitized}/set_temperature"
-        await self._subscribe(temp_topic, callback)
+        # Subscribe to standard climate entity commands
+        await self._subscribe(f"{base_topic}/set_temperature", callback)
+        await self._subscribe(f"{base_topic}/set_mode", callback)
         
-        # Subscribe to mode commands
-        mode_topic = f"{self.base_topic}/climate/{device_id_sanitized}/set_mode"
-        await self._subscribe(mode_topic, callback)
+        # Subscribe to ATW-specific control commands
+        if device.device_type == "atwunit":
+            # Power control
+            await self._subscribe(f"{base_topic}/set_power", callback)
+            
+            # Zone 1 controls
+            await self._subscribe(f"{base_topic}/set_zone1_temperature", callback)
+            await self._subscribe(f"{base_topic}/set_zone1_operation_mode", callback)
+            await self._subscribe(f"{base_topic}/set_zone1_heat_flow_temperature", callback)
+            await self._subscribe(f"{base_topic}/set_zone1_cool_flow_temperature", callback)
+            
+            # Hot water controls (if supported)
+            capabilities = device.state.get("capabilities", {})
+            if isinstance(capabilities, dict) and capabilities.get("hasHotWater", False):
+                await self._subscribe(f"{base_topic}/set_tank_temperature", callback)
+                await self._subscribe(f"{base_topic}/set_forced_hot_water", callback)
+            
+            # Zone 2 controls (if supported)
+            if isinstance(capabilities, dict) and capabilities.get("hasZone2", False):
+                await self._subscribe(f"{base_topic}/set_zone2_temperature", callback)
+                await self._subscribe(f"{base_topic}/set_zone2_operation_mode", callback)
+                await self._subscribe(f"{base_topic}/set_zone2_heat_flow_temperature", callback)
+                await self._subscribe(f"{base_topic}/set_zone2_cool_flow_temperature", callback)
         
         self._logger.info(f"Subscribed to commands for {device.device_name}")
     

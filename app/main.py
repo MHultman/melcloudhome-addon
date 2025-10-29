@@ -465,9 +465,11 @@ class Application:
         assert self.command_handler is not None, "Command handler not initialized"
         assert self.mqtt_bridge is not None, "MQTT bridge not initialized"
         
+        success = False
+        
         # Route based on topic
-        if "set_temperature" in topic:
-            # Parse temperature from payload
+        if "set_temperature" in topic and "zone" not in topic and "tank" not in topic:
+            # Legacy climate entity temperature command
             temperature = self.command_handler.parse_temperature_command(payload)
             if temperature is None:
                 logger.warning(
@@ -475,19 +477,12 @@ class Application:
                 )
                 return
             
-            # Execute command
             success = await self.command_handler.handle_temperature_command(
                 device, temperature
             )
-            
-            if success:
-                # Update stored state
-                self.device_states[device.device_id] = device.state.copy()
-                # Publish updated state to MQTT
-                await self.mqtt_bridge.publish_state(device)
         
         elif "set_mode" in topic:
-            # Parse mode from payload
+            # Climate entity mode command
             mode = self.command_handler.parse_mode_command(payload)
             if mode is None:
                 logger.warning(
@@ -495,17 +490,79 @@ class Application:
                 )
                 return
             
-            # Execute command
             success = await self.command_handler.handle_mode_command(device, mode)
-            
-            if success:
-                # Update stored state
-                self.device_states[device.device_id] = device.state.copy()
-                # Publish updated state to MQTT
-                await self.mqtt_bridge.publish_state(device)
+        
+        # ATW-specific control commands
+        elif "set_power" in topic:
+            success = await self.command_handler.handle_power_command(device, payload.strip())
+        
+        elif "set_zone1_temperature" in topic:
+            try:
+                temperature = float(payload)
+                success = await self.command_handler.handle_zone_temperature_command(device, 1, temperature)
+            except ValueError:
+                logger.warning(f"Invalid zone1 temperature: {payload}")
+        
+        elif "set_zone2_temperature" in topic:
+            try:
+                temperature = float(payload)
+                success = await self.command_handler.handle_zone_temperature_command(device, 2, temperature)
+            except ValueError:
+                logger.warning(f"Invalid zone2 temperature: {payload}")
+        
+        elif "set_zone1_operation_mode" in topic:
+            success = await self.command_handler.handle_zone_operation_mode_command(device, 1, payload.strip())
+        
+        elif "set_zone2_operation_mode" in topic:
+            success = await self.command_handler.handle_zone_operation_mode_command(device, 2, payload.strip())
+        
+        elif "set_zone1_heat_flow_temperature" in topic:
+            try:
+                temperature = int(float(payload))
+                success = await self.command_handler.handle_zone_flow_temperature_command(device, 1, "heat", temperature)
+            except ValueError:
+                logger.warning(f"Invalid zone1 heat flow temperature: {payload}")
+        
+        elif "set_zone1_cool_flow_temperature" in topic:
+            try:
+                temperature = int(float(payload))
+                success = await self.command_handler.handle_zone_flow_temperature_command(device, 1, "cool", temperature)
+            except ValueError:
+                logger.warning(f"Invalid zone1 cool flow temperature: {payload}")
+        
+        elif "set_zone2_heat_flow_temperature" in topic:
+            try:
+                temperature = int(float(payload))
+                success = await self.command_handler.handle_zone_flow_temperature_command(device, 2, "heat", temperature)
+            except ValueError:
+                logger.warning(f"Invalid zone2 heat flow temperature: {payload}")
+        
+        elif "set_zone2_cool_flow_temperature" in topic:
+            try:
+                temperature = int(float(payload))
+                success = await self.command_handler.handle_zone_flow_temperature_command(device, 2, "cool", temperature)
+            except ValueError:
+                logger.warning(f"Invalid zone2 cool flow temperature: {payload}")
+        
+        elif "set_tank_temperature" in topic:
+            try:
+                temperature = int(float(payload))
+                success = await self.command_handler.handle_tank_temperature_command(device, temperature)
+            except ValueError:
+                logger.warning(f"Invalid tank temperature: {payload}")
+        
+        elif "set_forced_hot_water" in topic:
+            success = await self.command_handler.handle_forced_hot_water_command(device, payload.strip())
         
         else:
             logger.warning(f"Unknown command topic: {topic}")
+            return
+        
+        # If command succeeded, update state and publish
+        if success:
+            self.device_states[device.device_id] = device.state.copy()
+            await self.mqtt_bridge.publish_state(device)
+
 
 
 async def main() -> int:

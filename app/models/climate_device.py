@@ -177,6 +177,9 @@ class ClimateDevice(BaseModel):
                 "tank_temperature": self.get_tank_temperature(),
                 "tank_target_temperature": self.get_tank_target_temperature(),
                 "operation_mode_zone1": self._get_atw_setting("OperationModeZone1"),
+                "set_temperature_zone1": self.get_target_temperature(),
+                "set_heat_flow_temperature_zone1": self._get_atw_float("SetHeatFlowTemperatureZone1"),
+                "set_cool_flow_temperature_zone1": self._get_atw_float("SetCoolFlowTemperatureZone1"),
                 "forced_hot_water": self._get_atw_bool("ForcedHotWaterMode"),
                 "prohibit_hot_water": self._get_atw_bool("ProhibitHotWater"),
                 "in_standby": self._get_atw_bool("InStandbyMode"),
@@ -187,8 +190,16 @@ class ClimateDevice(BaseModel):
                 base_state.update({
                     "zone2_temperature": self._get_atw_float("RoomTemperatureZone2"),
                     "zone2_target_temperature": self._get_atw_float("SetTemperatureZone2"),
+                    "set_temperature_zone2": self._get_atw_float("SetTemperatureZone2"),
                     "operation_mode_zone2": self._get_atw_setting("OperationModeZone2"),
+                    "set_heat_flow_temperature_zone2": self._get_atw_float("SetHeatFlowTemperatureZone2"),
+                    "set_cool_flow_temperature_zone2": self._get_atw_float("SetCoolFlowTemperatureZone2"),
                 })
+            
+            # Capabilities for control validation
+            capabilities = self.state.get("capabilities", {})
+            if isinstance(capabilities, dict):
+                base_state["Capabilities"] = capabilities
         
         # Error state (all device types)
         base_state["error"] = self.is_in_error()

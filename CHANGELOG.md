@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2025-10-28
+
+### Added
+
+- **Full ATW Device Control Support** - Complete control interface for Air-to-Water heat pump devices
+  - Power switch entity for device on/off control
+  - Zone 1 temperature setpoint (16-30°C with 0.5°C steps)
+  - Zone 1 operation mode selector (HeatRoomTemperature, HeatFlowTemperature, HeatCurve)
+  - Zone 1 heat flow temperature control (20-60°C)
+  - Zone 1 cool flow temperature control (5-25°C)
+  - Hot water tank temperature setpoint (40-60°C) when supported
+  - Forced hot water mode switch when supported
+  - Zone 2 controls (temperature, operation mode, flow temperatures) when supported
+- **Additional ATW Sensors** - Enhanced monitoring for ATW devices
+  - Tank water temperature (current)
+  - Tank water temperature (target/setpoint)
+  - Zone operation mode sensor
+  - Forced hot water mode binary sensor
+  - Prohibit hot water binary sensor
+  - Standby mode binary sensor
+  - Error state binary sensor with error code
+- **State Synchronization** - All control values are properly synchronized back to Home Assistant
+- **Capability-Based Discovery** - Control entities are automatically created based on device capabilities (hasHotWater, hasZone2)
+
+### Improved
+
+- Enhanced MQTT command routing with support for 12+ new command topics
+- Improved state payload with all controllable parameters exposed
+- Better command validation with device-specific temperature ranges
+- Extended command handler with ATW-specific control methods
+- Automatic state refresh after command execution
+- Comprehensive logging for all control operations
+
+### Technical
+
+- Added `_publish_atw_controls()` method to mqtt_bridge.py for control entity discovery
+- Extended CommandHandler with 7 new control methods for ATW devices
+- Enhanced `to_mqtt_state()` in ClimateDevice model to include all control parameters
+- Updated MQTT subscription logic to handle all new command topics
+- Implemented proper capability detection from device state
+- Added command topic routing in main.py for all new entity types
+
+### Changed
+
+- Updated config.yaml version to 1.2.0
+- Enhanced description to mention "full ATW control support"
+
+## [1.1.0] - 2025-10-28
+
+### Added
+
+- Current temperature display in Home Assistant climate entity
+- Temperature state templates for proper HA integration
+- Comprehensive ATW sensor suite (tank temps, operation modes, status flags)
+
 ### Changed
 
 - Updated pymelcloudhome dependency to v0.3.0
