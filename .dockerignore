@@ -1,0 +1,57 @@
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Documentation
+*.md
+!README.md
+docs/
+
+# Specs
+specs/
+.specify/
+
+# Tests
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+test-results/
+
+# Development
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+*.egg-info/
+
+# Logs (build context logs)
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Environment
+.env
+.env.*
+
+# Build artifacts
+Dockerfile*
+.dockerignore
+build.yaml

@@ -1,0 +1,38 @@
+name: MELCloud Home Bridge
+version: "1.0.0"
+slug: melcloudhome-bridge
+description: Bridge Mitsubishi MELCloud climate devices to Home Assistant via MQTT Discovery
+url: "https://github.com/MHultman/melcloudhome-addon"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+init: false
+hassio_api: true
+hassio_role: default
+homeassistant_api: false
+ports:
+  8099/tcp: 8099
+ports_description:
+  8099/tcp: Health check endpoint
+options:
+  melcloud_email: ""
+  melcloud_password: ""
+  mqtt_host: "core-mosquitto"
+  mqtt_port: 1883
+  mqtt_username: ""
+  mqtt_password: ""
+  mqtt_base_topic: "homeassistant"
+  poll_interval: 60
+  log_level: "INFO"
+schema:
+  melcloud_email: email
+  melcloud_password: password
+  mqtt_host: str
+  mqtt_port: port
+  mqtt_username: str?
+  mqtt_password: password?
+  mqtt_base_topic: str
+  poll_interval: int(10,600)
+  log_level: list(DEBUG|INFO|WARNING|ERROR)?
+image: "ghcr.io/{arch}-melcloudhome-bridge"
