@@ -50,13 +50,46 @@ class ClimateDevice(BaseModel):
         Returns:
             Setting value as string, or None if not found
         """
-        if self.device_type != "atwunit" or "settings" not in self.state:
+        from loguru import logger
+        
+        if self.device_type != "atwunit":
+            logger.debug(f"Not an ATW device (type={self.device_type}), cannot get setting {setting_name}")
+            return None
+            
+        if "settings" not in self.state:
+            logger.debug(
+                f"No 'settings' key in state for device {self.device_name}",
+                extra={
+                    "device_id": self.device_id,
+                    "setting_name": setting_name,
+                    "state_keys": list(self.state.keys())
+                }
+            )
             return None
         
         settings: List[Dict[str, str]] = self.state.get("settings", [])
+        logger.debug(
+            f"Looking for setting '{setting_name}' in {len(settings)} settings",
+            extra={"device_id": self.device_id, "setting_name": setting_name, "settings_count": len(settings)}
+        )
+        
         for setting in settings:
             if setting.get("name") == setting_name:
-                return setting.get("value")
+                value = setting.get("value")
+                logger.debug(
+                    f"Found setting '{setting_name}' = '{value}'",
+                    extra={"device_id": self.device_id, "setting_name": setting_name, "value": value}
+                )
+                return value
+        
+        logger.debug(
+            f"Setting '{setting_name}' not found in settings array",
+            extra={
+                "device_id": self.device_id,
+                "setting_name": setting_name,
+                "available_settings": [s.get("name") for s in settings[:10]]  # Show first 10
+            }
+        )
         return None
     
     def _get_atw_bool(self, setting_name: str) -> bool:
@@ -155,6 +188,34 @@ class ClimateDevice(BaseModel):
         Returns:
             Dictionary suitable for MQTT state message
         """
+        # DEBUG: Log state conversion start with full state dump
+        from loguru import logger
+        import json
+        
+        state_summary = {
+            "device_type": self.device_type,
+            "state_keys": list(self.state.keys()) if isinstance(self.state, dict) else [],
+            "has_settings": "settings" in self.state if isinstance(self.state, dict) else False,
+            "settings_count": len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
+        }
+        
+        # If state has settings, show first few
+        if isinstance(self.state, dict) and "settings" in self.state:
+            settings = self.state.get("settings", [])
+            state_summary["first_5_settings"] = settings[:5] if settings else []
+        
+        state_str = json.dumps(state_summary, indent=2)
+        logger.debug(
+            f"Converting state to MQTT for device {self.device_name}:\n{state_str}",
+            extra={
+                "device_id": self.device_id,
+                "device_type": self.device_type,
+                "state_keys": list(self.state.keys()) if isinstance(self.state, dict) else [],
+                "has_settings": "settings" in self.state if isinstance(self.state, dict) else False,
+                "settings_count": len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
+            }
+        )
+        
         base_state = {
             "power": "ON" if self.get_power() else "OFF",
             "available": self.online,

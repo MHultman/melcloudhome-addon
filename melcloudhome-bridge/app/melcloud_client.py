@@ -249,8 +249,53 @@ class MelCloudClient:
             if state is None:
                 raise DeviceNotFoundError(f"Device {device_id} not found")
             
+            # DEBUG: Log the raw state response with JSON for readability
+            import json
+            
+            state_str = json.dumps(state, indent=2, default=str) if state else "None"
             self._logger.debug(
-                f"Retrieved state for device {device_id}",
+                f"Raw state for device {device_id}:\n{state_str}",
+                extra={
+                    "operation": "get_device_state",
+                    "device_id": device_id,
+                    "duration_seconds": round(duration, 3),
+                    "state_keys": list(state.keys()) if isinstance(state, dict) else "not_a_dict",
+                    "state_type": type(state).__name__
+                }
+            )
+            
+            # If state is a dict with 'settings' array (ATW devices), log that too
+            if isinstance(state, dict) and "settings" in state:
+                settings = state.get("settings", [])
+                settings_str = json.dumps(settings[:5], indent=2) if settings else "[]"
+                self._logger.debug(
+                    f"Device {device_id} has {len(settings)} settings. First 5:\n{settings_str}",
+                    extra={
+                        "operation": "get_device_state",
+                        "device_id": device_id,
+                        "settings_count": len(settings),
+                        "sample_settings": settings[:3] if len(settings) > 0 else []
+                    }
+                )
+            
+            # Log capabilities if present
+            if isinstance(state, dict) and "capabilities" in state:
+                capabilities = state.get("capabilities", {})
+                self._logger.debug(
+                    f"Device {device_id} capabilities: hasHotWater={capabilities.get('hasHotWater')}, "
+                    f"hasZone2={capabilities.get('hasZone2')}, "
+                    f"tempRange={capabilities.get('minSetTemperature')}-{capabilities.get('maxSetTemperature')}",
+                    extra={
+                        "operation": "get_device_state",
+                        "device_id": device_id,
+                        "capabilities": capabilities
+                    }
+                )
+            
+            # DEBUG: Summary log
+            self._logger.debug(
+                f"Retrieved state for device {device_id} in {duration:.2f}s - "
+                f"keys: {list(state.keys()) if isinstance(state, dict) else 'N/A'}",
                 extra={
                     "operation": "get_device_state",
                     "device_id": device_id,
