@@ -38,22 +38,13 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-<<<<<<< HEAD
-          images: ghcr.io/${{ github.repository }}-${{ matrix.arch }}
-          tags: |
-            type=raw,value=latest,enable={{is_default_branch}}
-=======
           images: ghcr.io/${{ github.repository }}
           tags: |
->>>>>>> 63f777ff905a74e7262e8ea288f6adcfc12c20ba
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-<<<<<<< HEAD
-=======
             type=semver,pattern={{major}}
->>>>>>> 63f777ff905a74e7262e8ea288f6adcfc12c20ba
             type=sha
 
       - name: Build and push
@@ -71,8 +62,6 @@ jobs:
             BUILD_DATE=${{ github.event.repository.updated_at }}
             BUILD_REF=${{ github.sha }}
             BUILD_VERSION=${{ github.ref_name }}
-<<<<<<< HEAD
-=======
 
   manifest:
     name: Create Multi-Arch Manifest
@@ -98,4 +87,3 @@ jobs:
             ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-aarch64 \
             ghcr.io/${{ github.repository }}:sha-${{ github.sha }}-armv7
         if: github.ref == 'refs/heads/main'
->>>>>>> 63f777ff905a74e7262e8ea288f6adcfc12c20ba
