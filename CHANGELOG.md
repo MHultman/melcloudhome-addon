@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.4] - 2025-10-29
+
+### Fixed
+
+- **Critical**: Temperature commands and other MQTT commands now work correctly
+  - Fixed "No event loop available" error when sending commands from Home Assistant
+  - MQTT callbacks now properly schedule async operations using `run_coroutine_threadsafe()`
+  - Commands like set_temperature, set_tank_temperature, etc. now execute successfully
+
 ## [1.4.3] - 2025-10-29
 
 ### Changed
