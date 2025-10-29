@@ -24,7 +24,12 @@ RUN apk add --no-cache \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    bash
+    bash \
+    gcc \
+    musl-dev \
+    libffi-dev \
+    openssl-dev \
+    python3-dev
 
 # Set environment variable to skip pyppeteer browser download (we use system Chromium)
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
@@ -38,7 +43,8 @@ COPY requirements.txt .
 # Install Python dependencies
 # Note: pymelcloudhome 0.3.1 is available on PyPI
 # ARM builds may fall back to source if not yet on piwheels
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
 COPY app/ ./app/
