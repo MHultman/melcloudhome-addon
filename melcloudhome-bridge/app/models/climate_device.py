@@ -254,6 +254,32 @@ class ClimateDevice(BaseModel):
             return self._get_atw_bool("ForcedHotWaterMode")
         return False
     
+    def _map_melcloud_mode_to_ha(self, melcloud_mode: str) -> str:
+        """
+        Map MELCloud operation mode to Home Assistant HVAC mode.
+        
+        MELCloud modes: Heating, Cooling, Auto, etc.
+        Home Assistant modes: heat, cool, auto, off, etc.
+        
+        Args:
+            melcloud_mode: Mode string from MELCloud API
+            
+        Returns:
+            Home Assistant compatible mode string
+        """
+        mode_lower = melcloud_mode.lower() if melcloud_mode else "unknown"
+        
+        # Map MELCloud modes to HA modes
+        mode_map = {
+            "heating": "heat",
+            "cooling": "cool",
+            "auto": "auto",
+            "off": "off",
+            "unknown": "heat",  # Default to heat if unknown
+        }
+        
+        return mode_map.get(mode_lower, "heat")
+    
     def to_mqtt_state(self) -> dict:
         """
         Convert to MQTT state topic payload for Home Assistant.
@@ -300,13 +326,17 @@ class ClimateDevice(BaseModel):
         
         elif self.device_type == "atwunit":
             # ATW: Hydronic heating with zones + hot water tank
+            # Map MELCloud OperationMode to Home Assistant mode
+            operation_mode = self.get_operation_mode() or "unknown"
+            ha_mode = self._map_melcloud_mode_to_ha(operation_mode)
+            
             atw_values = {
-                "mode": self.get_operation_mode() or "unknown",
+                "mode": ha_mode,
                 "current_temperature": self.get_room_temperature_zone1(),  # Zone 1 room temp
                 "temperature": self.get_set_temperature_zone1(),  # Zone 1 target
                 "tank_temperature": self.get_tank_temperature(),
                 "tank_target_temperature": self.get_tank_target_temperature(),
-                "operation_mode": self.get_operation_mode(),
+                "operation_mode": operation_mode,
                 "operation_mode_zone1": self.get_operation_mode_zone1(),
                 "forced_hot_water": self.get_forced_hot_water_mode(),
                 "prohibit_hot_water": self.get_prohibit_hot_water(),

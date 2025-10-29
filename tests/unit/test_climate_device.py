@@ -135,7 +135,8 @@ def test_climate_device_to_mqtt_state_atw(mock_atw_device_state):
     
     assert state["power"] == "ON"
     assert state["available"] == True
-    assert state["mode"] == "Heating"
+    assert state["mode"] == "heat"  # Mapped from "Heating" to HA mode
+    assert state["operation_mode"] == "Heating"  # Original MELCloud mode
     assert state["current_temperature"] == 21.0
     assert state["temperature"] == 21.0
     assert state["tank_temperature"] == 51.5
