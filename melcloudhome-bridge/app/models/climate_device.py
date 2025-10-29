@@ -98,10 +98,18 @@ class ClimateDevice(BaseModel):
         Returns:
             Float value, or None if not found or invalid
         """
+        from loguru import logger
+        
         value = self._get_atw_setting(setting_name)
         try:
-            return float(value) if value else None
-        except (ValueError, TypeError):
+            result = float(value) if value else None
+            logger.debug(
+                f"Converting '{setting_name}' to float: '{value}' -> {result}",
+                extra={"device_id": self.device_id, "setting_name": setting_name, "string_value": value, "float_value": result}
+            )
+            return result
+        except (ValueError, TypeError) as e:
+            logger.warning(f"Failed to convert '{setting_name}' value '{value}' to float: {e}")
             return None
     
     def get_power(self) -> bool:
