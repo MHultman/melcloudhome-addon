@@ -893,10 +893,34 @@ class MQTTBridge:
         # Convert device state to MQTT payload
         state_payload = device.to_mqtt_state()
         
+        # DEBUG: Log the payload being published
+        self._logger.debug(
+            f"Publishing state to MQTT for {device.device_name}",
+            extra={
+                "device_id": device.device_id,
+                "topic": state_topic,
+                "payload_keys": list(state_payload.keys()),
+                "power": state_payload.get("power"),
+                "temperature": state_payload.get("temperature"),
+                "current_temperature": state_payload.get("current_temperature"),
+                "available": state_payload.get("available")
+            }
+        )
+        
+        payload_json = json.dumps(state_payload)
+        self._logger.debug(
+            f"MQTT payload JSON for {device.device_name}: {payload_json}",
+            extra={
+                "device_id": device.device_id,
+                "topic": state_topic,
+                "payload_size": len(payload_json)
+            }
+        )
+        
         # Publish state (not retained - changes frequently)
         await self.publish(
             state_topic,
-            json.dumps(state_payload),
+            payload_json,
             retain=False
         )
         

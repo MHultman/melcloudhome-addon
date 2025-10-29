@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.1] - 2025-10-29
+
+### Fixed
+
+- **Enhanced Debug Logging** - Added comprehensive debug logging for troubleshooting state issues
+  - Log raw MELCloud API responses when fetching device state
+  - Log device settings array structure and sample settings for ATW devices
+  - Log device capabilities (hasHotWater, hasZone2, temperature ranges)
+  - Log power state extraction and online status
+  - Log ATW temperature values (current, target, tank, tank_target)
+  - Log operation modes and zone settings
+  - Log final MQTT state payload before publishing
+  - Log MQTT publish operations with topic and payload details
+
+### Improved
+
+- Better diagnostics for "unknown" state issues
+- More detailed logging of state conversion process
+- Enhanced visibility into ClimateDevice model state extraction
+- Improved MQTT payload visibility for debugging
+
+### Usage
+
+To enable debug logging, set `log_level: "DEBUG"` in the addon configuration:
+
+```yaml
+log_level: "DEBUG"
+```
+
+This will provide detailed logs showing:
+
+- Raw API responses from MELCloud
+- State extraction from device settings
+- MQTT payload generation
+- Publishing operations
+
 ## [1.2.0] - 2025-10-28
 
 ### Added

@@ -155,10 +155,34 @@ class ClimateDevice(BaseModel):
         Returns:
             Dictionary suitable for MQTT state message
         """
+        from loguru import logger
+        
+        # DEBUG: Log the raw state we're working with
+        logger.debug(
+            f"Converting state to MQTT for device {self.device_name} ({self.device_type})",
+            extra={
+                "device_id": self.device_id,
+                "device_type": self.device_type,
+                "state_keys": list(self.state.keys()) if isinstance(self.state, dict) else [],
+                "has_settings": "settings" in self.state if isinstance(self.state, dict) else False,
+                "settings_count": len(self.state.get("settings", [])) if isinstance(self.state, dict) else 0
+            }
+        )
+        
         base_state = {
             "power": "ON" if self.get_power() else "OFF",
             "available": self.online,
         }
+        
+        # DEBUG: Log extracted power state
+        logger.debug(
+            f"Device {self.device_name} power state: {base_state['power']}, online: {self.online}",
+            extra={
+                "device_id": self.device_id,
+                "power": base_state["power"],
+                "online": self.online
+            }
+        )
         
         if self.device_type == "ataunit":
             # ATA: Standard climate control
@@ -170,14 +194,34 @@ class ClimateDevice(BaseModel):
         
         elif self.device_type == "atwunit":
             # ATW: Hydronic heating with zones + hot water tank
+            current_temp = self.get_temperature()
+            target_temp = self.get_target_temperature()
+            tank_temp = self.get_tank_temperature()
+            tank_target = self.get_tank_target_temperature()
+            operation_mode = self._get_atw_setting("OperationModeZone1")
+            
+            # DEBUG: Log key ATW values
+            logger.debug(
+                f"ATW device {self.device_name} temps: current={current_temp}, "
+                f"target={target_temp}, tank={tank_temp}, tank_target={tank_target}, mode={operation_mode}",
+                extra={
+                    "device_id": self.device_id,
+                    "current_temperature": current_temp,
+                    "target_temperature": target_temp,
+                    "tank_temperature": tank_temp,
+                    "tank_target_temperature": tank_target,
+                    "operation_mode": operation_mode
+                }
+            )
+            
             base_state.update({
                 "mode": self._get_atw_setting("OperationMode"),
-                "current_temperature": self.get_temperature(),  # Zone 1 room temp
-                "temperature": self.get_target_temperature(),  # Zone 1 target
-                "tank_temperature": self.get_tank_temperature(),
-                "tank_target_temperature": self.get_tank_target_temperature(),
-                "operation_mode_zone1": self._get_atw_setting("OperationModeZone1"),
-                "set_temperature_zone1": self.get_target_temperature(),
+                "current_temperature": current_temp,  # Zone 1 room temp
+                "temperature": target_temp,  # Zone 1 target
+                "tank_temperature": tank_temp,
+                "tank_target_temperature": tank_target,
+                "operation_mode_zone1": operation_mode,
+                "set_temperature_zone1": target_temp,
                 "set_heat_flow_temperature_zone1": self._get_atw_float("SetHeatFlowTemperatureZone1"),
                 "set_cool_flow_temperature_zone1": self._get_atw_float("SetCoolFlowTemperatureZone1"),
                 "forced_hot_water": self._get_atw_bool("ForcedHotWaterMode"),
@@ -187,6 +231,7 @@ class ClimateDevice(BaseModel):
             
             # Zone 2 if present
             if self.has_zone_2():
+                logger.debug(f"Device {self.device_name} has Zone 2", extra={"device_id": self.device_id})
                 base_state.update({
                     "zone2_temperature": self._get_atw_float("RoomTemperatureZone2"),
                     "zone2_target_temperature": self._get_atw_float("SetTemperatureZone2"),
@@ -200,6 +245,14 @@ class ClimateDevice(BaseModel):
             capabilities = self.state.get("capabilities", {})
             if isinstance(capabilities, dict):
                 base_state["Capabilities"] = capabilities
+                logger.debug(
+                    f"Device {self.device_name} capabilities included in state",
+                    extra={
+                        "device_id": self.device_id,
+                        "has_hot_water": capabilities.get("hasHotWater"),
+                        "has_zone2": capabilities.get("hasZone2")
+                    }
+                )
         
         # Error state (all device types)
         base_state["error"] = self.is_in_error()
@@ -208,5 +261,15 @@ class ClimateDevice(BaseModel):
             base_state["error_code"] = error_code if error_code else ""
         else:
             base_state["error_code"] = ""
+        
+        # DEBUG: Log final MQTT state
+        logger.debug(
+            f"Final MQTT state for {self.device_name}: power={base_state.get('power')}, "
+            f"temp={base_state.get('temperature')}, current={base_state.get('current_temperature')}",
+            extra={
+                "device_id": self.device_id,
+                "mqtt_state": base_state
+            }
+        )
         
         return base_state
