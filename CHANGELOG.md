@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.2] - 2025-10-29
+
+### Changed
+- Map MELCloud operation modes to Home Assistant climate modes
+  - Climate entity `mode` now shows: `heat`, `cool`, `auto`, `off` (HA standard)
+  - Original MELCloud mode preserved in `operation_mode` attribute
+  - Ensures proper integration with HA climate entity controls
+
 ## [1.2.1] - 2025-10-29
 
 ### Fixed

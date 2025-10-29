@@ -275,6 +275,7 @@ class ClimateDevice(BaseModel):
             "cooling": "cool",
             "auto": "auto",
             "off": "off",
+            "stop": "off",
             "unknown": "heat",  # Default to heat if unknown
         }
         
