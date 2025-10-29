@@ -5,6 +5,23 @@ All notable changes to MELCloud Home Bridge will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Updated pymelcloudhome dependency to v0.3.0
+- Switched from Playwright to Pyppeteer for browser automation
+- Switched to system Chromium (`/usr/bin/chromium`) for browser automation
+- Removed Playwright browser installation step from Dockerfile
+- Simplified Docker image by using Alpine Linux system Chromium
+
+### Improved
+
+- Reduced Docker image size by eliminating bundled browser binaries
+- Enhanced ARM64/Raspberry Pi support with native system Chromium
+- Improved authentication reliability across all architectures
+- Better documentation of browser automation implementation
+
 ## [1.0.0] - 2025-10-28
 
 ### Added

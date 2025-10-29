@@ -169,11 +169,12 @@ sequenceDiagram
 
 - **Responsibility**: MELCloud API communication, authentication, device management
 - **Key Functions**:
-  - `authenticate()`: Playwright-based login to MELCloud
+  - `authenticate()`: Browser automation-based login to MELCloud using pymelcloudhome v0.3.0
   - `discover_devices()`: Fetch all devices from MELCloud account
   - `get_device_state()`: Get current state of a specific device
   - `set_temperature()`, `set_mode()`, `set_power()`: Device control
   - `_reauthenticate()`: Automatic session renewal on 401 errors
+- **Browser Automation**: Uses system Chromium (`/usr/bin/chromium`) with Pyppeteer for headless authentication
 
 ### MQTT Bridge (`app/mqtt_bridge.py`)
 
@@ -279,7 +280,8 @@ graph LR
 
 - **Base Image**: `ghcr.io/home-assistant/amd64-base-python:3.11-alpine3.19`
 - **Multi-Arch**: amd64, aarch64, armv7
-- **Pre-installed**: Chromium browser (for Playwright authentication)
+- **Browser**: System Chromium (`/usr/bin/chromium`) for browser automation
+- **Dependencies**: pymelcloudhome v0.3.0+ with native Alpine Linux support
 - **Ports**: 8099 (health check endpoint)
 - **Volumes**: None (stateless operation)
 - **Networking**: Host network mode (Home Assistant add-on convention)
@@ -290,7 +292,7 @@ graph LR
 - **Logs**: Passwords sanitized before logging (regex-based scrubbing)
 - **MQTT**: Supports username/password authentication
 - **TLS**: MELCloud API uses HTTPS, MQTT can use TLS if configured
-- **Browser**: Chromium runs in sandboxed container
+- **Browser**: System Chromium runs in headless mode within sandboxed container
 - **Secrets**: Never written to disk, only in memory
 
 ## Monitoring & Observability

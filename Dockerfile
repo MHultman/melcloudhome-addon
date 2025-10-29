@@ -1,20 +1,18 @@
 ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base-python:3.11-alpine3.18
 FROM ${BUILD_FROM}
 
-# Install system dependencies for Playwright and Chromium
+# Install system dependencies including Chromium
+# Chromium is required for pymelcloudhome authentication on all architectures
 RUN apk add --no-cache \
     chromium \
-    chromium-chromedriver \
     nss \
     freetype \
     harfbuzz \
     ca-certificates \
     ttf-freefont \
-    nodejs \
     bash
 
-# Set environment variables for Playwright
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+# Set environment variable to tell Playwright to use system Chromium
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 # Create app directory
@@ -24,11 +22,9 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Install Python dependencies
+# Note: pymelcloudhome 0.3.1 is available on PyPI
+# ARM builds may fall back to source if not yet on piwheels
 RUN pip install --no-cache-dir -r requirements.txt
-
-# Install Playwright and Chromium browser
-RUN playwright install chromium && \
-    playwright install-deps chromium
 
 # Copy application code
 COPY app/ ./app/

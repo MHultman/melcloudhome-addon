@@ -1,8 +1,7 @@
-# MELCloud API client
-pymelcloudhome>=0.2.0
-
-# Browser automation for authentication
-playwright>=1.40.0
+# MELCloud API client (includes pyppeteer dependency)
+# v0.3.0 introduces chromium_executable_path parameter and switches to pyppeteer
+# v0.3.1 fixes __version__ attribute bug from 0.3.0
+pymelcloudhome==0.3.1
 
 # MQTT client
 paho-mqtt>=1.6.1

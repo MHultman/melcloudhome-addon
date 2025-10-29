@@ -111,8 +111,12 @@ class MelCloudClient:
             import time
             start_time = time.time()
             
-            # Create client and login
-            self._client = MelCloudHomeClient()
+            # Create client with system Chromium path for Alpine Linux
+            # pymelcloudhome v0.3.0+ supports chromium_executable_path for ARM64/Alpine
+            # Alpine Linux uses /usr/bin/chromium as the executable path
+            self._client = MelCloudHomeClient(
+                chromium_executable_path='/usr/bin/chromium'  # type: ignore[call-arg]
+            )
             await self._client.login(
                 email=self.credentials.email,
                 password=self.credentials.password

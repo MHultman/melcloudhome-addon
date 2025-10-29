@@ -224,11 +224,25 @@ Response:
 
 ## Technical Details
 
-- **Architecture**: Python 3.11 async application using pymelcloudhome library
-- **Authentication**: Playwright-based browser automation for MELCloud login
+- **Architecture**: Python 3.11 async application using pymelcloudhome library v0.3.0+
+- **Authentication**: Chromium-based browser automation for MELCloud login (via Pyppeteer)
+- **Browser**: System Chromium (`/usr/bin/chromium`) pre-installed in Alpine Linux container
+- **ARM64 Support**: Native support for Raspberry Pi (aarch64) and armv7 architectures
 - **Protocol**: MQTT Discovery for Home Assistant integration
-- **Container**: Alpine Linux base with pre-installed Chromium
+- **Container**: Alpine Linux base with optimized Chromium installation
 - **Supported Devices**: ATA (Air-to-Air) and ATW (Air-to-Water) MELCloud units
+
+### Browser Automation
+
+This add-on uses **pymelcloudhome v0.3.0** which provides improved browser automation support:
+
+- **System Chromium**: Uses the Alpine Linux system Chromium installation instead of downloading browsers
+- **Pyppeteer**: Uses Pyppeteer (Puppeteer for Python) for headless browser automation, replacing Playwright
+- **Reduced Image Size**: No need to bundle browser binaries in the container
+- **Multi-Architecture**: Full support for amd64, aarch64 (Raspberry Pi), and armv7 platforms
+- **Headless Mode**: Runs Chromium in headless mode for authentication without GUI requirements
+
+The add-on automatically configures pymelcloudhome to use the system Chromium at `/usr/bin/chromium`.
 
 ## License
 
