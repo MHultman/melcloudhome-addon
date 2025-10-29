@@ -288,13 +288,15 @@ class MelCloudClient:
                     }
                 )
             
+            # DEBUG: Log the complete retrieved state
             self._logger.debug(
-                f"Retrieved state for device {device_id}",
+                f"Retrieved state for device {device_id}: {state}",
                 extra={
                     "operation": "get_device_state",
                     "device_id": device_id,
                     "duration_seconds": f"{duration:.2f}",
-                    "state_keys": list(state.keys()) if state else []
+                    "state_keys": list(state.keys()) if state else [],
+                    "full_state": state
                 }
             )
             
