@@ -79,7 +79,7 @@ class MelCloudClient:
         """
         Authenticate with MELCloud and obtain session token.
         
-        Uses pymelcloudhome's MelCloudHomeClient.login() which handles Playwright-based
+        Uses pymelcloudhome's MelCloudHomeClient.login() which handles Pyppeteer-based
         web authentication for JavaScript-heavy MELCloud login flow.
         
         Raises:

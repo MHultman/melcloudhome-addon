@@ -12,7 +12,7 @@ RUN apk add --no-cache \
     ttf-freefont \
     bash
 
-# Set environment variable to tell Playwright to use system Chromium
+# Set environment variable to skip pyppeteer browser download (we use system Chromium)
 ENV PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
 
 # Create app directory

@@ -62,7 +62,7 @@ sequenceDiagram
     Config-->>Main: Config validated
 
     Main->>MEL: Initialize client
-    MEL->>API: Authenticate (Playwright)
+    MEL->>API: Authenticate (Pyppeteer)
     API-->>MEL: Session token
     MEL-->>Main: Authenticated
 

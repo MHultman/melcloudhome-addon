@@ -237,7 +237,7 @@ Response:
 This add-on uses **pymelcloudhome v0.3.0** which provides improved browser automation support:
 
 - **System Chromium**: Uses the Alpine Linux system Chromium installation instead of downloading browsers
-- **Pyppeteer**: Uses Pyppeteer (Puppeteer for Python) for headless browser automation, replacing Playwright
+- **Pyppeteer**: Uses Pyppeteer (Puppeteer for Python) for headless browser automation
 - **Reduced Image Size**: No need to bundle browser binaries in the container
 - **Multi-Architecture**: Full support for amd64, aarch64 (Raspberry Pi), and armv7 platforms
 - **Headless Mode**: Runs Chromium in headless mode for authentication without GUI requirements
@@ -250,6 +250,5 @@ MIT License - See LICENSE file for details
 
 ## Credits
 
-- **pymelcloudhome**: MELCloud API client library
-- **Playwright**: Browser automation framework
+- **pymelcloudhome**: MELCloud API client library (uses Pyppeteer for browser automation)
 - **Home Assistant**: Home automation platform
