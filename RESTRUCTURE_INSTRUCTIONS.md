@@ -27,10 +27,8 @@ repository-root/
    - CHANGELOG.md
    - app/
    - requirements.txt
-   
 3. Keep at root level:
    - repository.json (update it to list the addon)
-   
 4. Update repository.json to reference the addon
 
 ## Alternative: Use build.yaml
